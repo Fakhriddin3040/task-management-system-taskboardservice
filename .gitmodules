@@ -1,0 +1,8 @@
+[submodule "TaskManagementSystem.GrpcLib"]
+	path = TaskManagementSystem.GrpcLib
+	url = git@github.com:Fakhriddin3040/task-management-system-grpclib.git
+	branch = master
+[submodule "TaskManagementSystem.SharedLib"]
+	path = TaskManagementSystem.SharedLib
+	url = git@github.com:Fakhriddin3040/task-management-system-sharedlib.git
+	branch = master
