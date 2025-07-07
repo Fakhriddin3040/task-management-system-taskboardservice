@@ -1,7 +1,11 @@
+using TaskManagementSystem.GrpcLib.Configurations.AspNet;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddGrpc();
+builder.Services.AddGrpcLib();
 
 var app = builder.Build();
+
+app.UseGrpcLib();
 
 app.Run();
