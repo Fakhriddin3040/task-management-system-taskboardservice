@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.DashboardService", "TaskManagementSystem.DashboardService\TaskManagementSystem.DashboardService.csproj", "{1C3C940C-0558-45FD-8B94-2A363A7C8E91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.TaskBoardService", "TaskManagementSystem.TaskBoardService\TaskManagementSystem.TaskBoardService.csproj", "{1C3C940C-0558-45FD-8B94-2A363A7C8E91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskManagementSystem.SharedLib", "TaskManagementSystem.SharedLib\TaskManagementSystem.SharedLib.csproj", "{99DD3CBA-24DB-40B1-89EA-965B3AEE98D2}"
 EndProject
