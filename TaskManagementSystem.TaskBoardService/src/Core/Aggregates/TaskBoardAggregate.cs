@@ -19,14 +19,13 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
     public static async Task<Result<TaskBoardAggregate>> Create(
         string name,
-        string description,
+        string? description,
         Guid organizationId,
         Guid createdById,
         CancellationToken cancellationToken,
         IDateTimeService dateTimeService,
         IValidNamePolicy namePolicy,
-        IUniqueTaskBoardNamePolicy uniqueNamePolicy,
-        IOrganizationExistsPolicy organizationExistsPolicy
+        IUniqueTaskBoardNamePolicy uniqueNamePolicy
         )
     {
         var errors = new List<AppExceptionDetail>();
@@ -47,16 +46,6 @@ public sealed class TaskBoardAggregate : TaskBoardModel
                 new(
                     StatusCode: AppExceptionStatusCode.UniqueConstraints,
                     Field: TaskBoardField.Name
-                )
-            );
-        }
-
-        if (! await organizationExistsPolicy.ExistsAsync(organizationId, cancellationToken))
-        {
-            errors.Add(
-                new(
-                    StatusCode: AppExceptionStatusCode.NotFound,
-                    Field: TaskBoardField.Organization.AsForeignKey()
                 )
             );
         }
