@@ -1,0 +1,15 @@
+using TaskManagementSystem.AuthService.Core.ValueObjects;
+using TaskManagementSystem.SharedLib.ValueObjects;
+
+namespace TaskManagementSystem.TaskBoardService.Core.Models;
+
+
+public class TaskColumnModel
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public int Order { get; set; }
+    public Guid BoardId { get; set; }
+    public AuthorInfo AuthorInfo { get; set; }
+    public Timestamps Timestamps { get; set; }
+}
