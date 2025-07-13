@@ -24,7 +24,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         Guid createdById,
         CancellationToken cancellationToken,
         IDateTimeService dateTimeService,
-        IValidNamePolicy namePolicy,
+        IValidBoardNamePolicy namePolicy,
         IUniqueTaskBoardNamePolicy uniqueNamePolicy
         )
     {
