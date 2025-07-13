@@ -18,14 +18,14 @@ public class TaskBoardCreateCommandHandler : IRequestHandler<TaskBoardCreateComm
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IDateTimeService _dateTimeService;
     private readonly IUniqueTaskBoardNamePolicy _uniqueNamePolicy;
-    private readonly IValidNamePolicy _namePolicy;
+    private readonly IValidBoardNamePolicy _namePolicy;
 
     public TaskBoardCreateCommandHandler(
         IExecutionContextProvider executionContextProvider,
         IDateTimeService dateTimeService,
         IUniqueTaskBoardNamePolicy uniqueNamePolicy,
         ITaskBoardRepository taskBoardRepository,
-        IValidNamePolicy namePolicy)
+        IValidBoardNamePolicy namePolicy)
     {
         _executionContext = executionContextProvider.GetContext();
         _dateTimeService = dateTimeService;
