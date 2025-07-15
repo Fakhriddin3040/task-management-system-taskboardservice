@@ -1,18 +1,17 @@
-using TaskManagementSystem.GrpcLib.Configurations.AspNet;
-using TaskManagementSystem.TaskBoardService.Api.Grpc.Services;
+using TaskManagementSystem.TaskBoardService.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddGrpcLib();
-builder.Services.AddMediatR(
-    options =>
-    {
-        options.RegisterServicesFromAssemblyContaining<TaskBoardGrpcService>();
-    }
-);
+builder.Services.AddApplicationDependencies();
+builder.Services.AddApplicationDbContext(builder.Configuration);
+builder.Services.AddApplicationGrpc();
+builder.Services.AddLogging(l =>
+{
+    l.AddConsole();
+    l.SetMinimumLevel(LogLevel.Debug);
+});
 
 var app = builder.Build();
 
-app.UseGrpcLib();
-app.MapGrpcService<TaskBoardGrpcService>();
+app.UseApplicationGrpc();
 app.Run();

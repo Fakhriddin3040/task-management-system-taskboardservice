@@ -4,7 +4,7 @@ using TaskManagementSystem.SharedLib.ValueObjects;
 namespace TaskManagementSystem.TaskBoardService.Core.Models;
 
 
-public class TaskColumnModel
+public class TaskBoardColumnModel
 {
     public Guid Id { get; set; }
     public string Name { get; set; }

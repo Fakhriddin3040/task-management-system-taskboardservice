@@ -11,11 +11,11 @@ using TaskManagementSystem.TaskBoardService.Core.Models;
 namespace TaskManagementSystem.TaskBoardService.Aggregates;
 
 
-public sealed class TaskColumnAggregate : TaskColumnModel
+public sealed class TaskBoardColumnAggregate : TaskBoardColumnModel
 {
-    private TaskColumnAggregate() {}
+    private TaskBoardColumnAggregate() {}
 
-    public static async Task<Result<TaskColumnAggregate>> CreateAsync(
+    public static async Task<Result<TaskBoardColumnAggregate>> CreateAsync(
         string name,
         int order,
         Guid boardId,
@@ -50,13 +50,13 @@ public sealed class TaskColumnAggregate : TaskColumnModel
 
         if (errors.Any())
         {
-            return Result<TaskColumnAggregate>.Failure(errors);
+            return Result<TaskBoardColumnAggregate>.Failure(errors);
         }
 
         var timestamp = new Timestamps(dateTimeService);
         var authorInfo = new AuthorInfo(createdById, createdById);
 
-        var taskColumn = new TaskColumnAggregate
+        var taskColumn = new TaskBoardColumnAggregate
         {
             Id = Guid.NewGuid(),
             Name = name,
@@ -66,6 +66,6 @@ public sealed class TaskColumnAggregate : TaskColumnModel
             AuthorInfo = authorInfo
         };
 
-        return Result<TaskColumnAggregate>.Success(taskColumn);
+        return Result<TaskBoardColumnAggregate>.Success(taskColumn);
     }
 }

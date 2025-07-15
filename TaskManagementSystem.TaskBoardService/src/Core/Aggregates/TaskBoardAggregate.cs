@@ -5,6 +5,7 @@ using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Models.Fields;
 using TaskManagementSystem.SharedLib.ValueObjects;
+using TaskManagementSystem.TaskBoardService.Core.Extensions;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Models;
 
@@ -68,5 +69,66 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         };
 
         return Result<TaskBoardAggregate>.Success(taskBoard);
+    }
+
+    public async Task<Result<TaskBoardColumnModel>> AddColumn(
+        string name,
+        Guid createdById,
+        CancellationToken cancellationToken,
+        IDateTimeService dateTimeService,
+        IValidColumnNamePolicy namePolicy,
+        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy
+    )
+    {
+        var errors = new List<AppExceptionDetail>();
+
+        if (!namePolicy.IsValid(name))
+        {
+            errors.Add(
+                new(
+                    StatusCode: AppExceptionStatusCode.InvalidFormat,
+                    Field: TaskColumnField.Name
+                )
+            );
+        }
+
+        if (
+            !await uniqueNamePolicy.IsUniqueAsync(
+                taskBoardId: Id,
+                columnName: name,
+                cancellationToken: cancellationToken,
+                columnId: null)
+            )
+        {
+            errors.Add(
+                new(
+                    StatusCode: AppExceptionStatusCode.UniqueConstraints,
+                    Field: TaskColumnField.Name
+                )
+            );
+        }
+
+        if (errors.Any())
+        {
+            return Result<TaskBoardColumnModel>.Failure(errors);
+        }
+
+        var timestamps = new Timestamps(dateTimeService);
+        var authorInfo = new AuthorInfo(createdById, createdById);
+
+        var latestColumnsOrder = this.GetNextColumnOrder();
+
+        var column = new TaskBoardColumnModel
+        {
+            Id = Guid.Empty,
+            Name = name,
+            AuthorInfo = authorInfo,
+            Timestamps = timestamps,
+            Order = latestColumnsOrder
+        };
+
+        Columns.Add(column);
+
+        return Result<TaskBoardColumnModel>.Success(column);
     }
 }

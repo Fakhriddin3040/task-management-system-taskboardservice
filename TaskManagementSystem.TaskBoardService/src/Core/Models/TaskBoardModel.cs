@@ -12,5 +12,5 @@ public class TaskBoardModel
     public Guid OrganizationId { get; set; }
     public AuthorInfo AuthorInfo { get; set; }
     public Timestamps Timestamps { get; set; }
-    public List<TaskColumnModel> TaskColumns { get; set; }
+    public List<TaskBoardColumnModel> Columns { get; set; } = [];
 }
