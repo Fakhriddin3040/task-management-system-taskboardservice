@@ -40,7 +40,7 @@ public class TaskBoardCreateCommandHandler : IRequestHandler<TaskBoardCreateComm
 
     public async Task<Result<TaskBoardCreateResult>> Handle(TaskBoardCreateCommand request, CancellationToken cancellationToken)
     {
-        var result = await TaskBoardAggregate.Create(
+        var result = await TaskBoardAggregate.CreateAsync(
             name: request.Name,
             description: request.Description,
             organizationId: Guid.NewGuid(),

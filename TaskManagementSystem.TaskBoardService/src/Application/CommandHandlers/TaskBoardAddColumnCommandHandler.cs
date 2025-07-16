@@ -48,7 +48,7 @@ public class TaskBoardAddColumnCommandHandler : IRequestHandler<TaskBoardAddColu
             );
         }
 
-        var result = await board.AddColumn(
+        var result = await board.AddColumnAsync(
             name: request.Name,
             createdById: _context.User.Id,
             cancellationToken: cancellationToken,

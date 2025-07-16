@@ -5,7 +5,7 @@ namespace TaskManagementSystem.TaskBoardService.Infrastructure.Policies;
 
 public class UniqueBoardNamePolicy : IUniqueTaskBoardNamePolicy
 {
-    public Task<bool> IsUnique(string name)
+    public Task<bool> IsUnique(string name, CancellationToken cancellationToken)
     {
         return Task.FromResult(true);
     }

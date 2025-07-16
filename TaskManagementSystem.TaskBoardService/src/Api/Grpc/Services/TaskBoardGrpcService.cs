@@ -59,6 +59,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         if (result.IsFailure)
         {
             _logger.LogError("Failed to create task board column. Details in json format: {ErrorDetails}", result.ErrorDetailsToJson());
+            throw result.CreateExceptionFrom();
         }
 
         return new TaskBoardColumnCreateResponse {

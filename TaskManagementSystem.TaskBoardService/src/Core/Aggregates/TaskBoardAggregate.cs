@@ -1,7 +1,8 @@
-using TaskManagementSystem.AuthService.Core.ValueObjects;
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
+using TaskManagementSystem.AuthService.Core.ValueObjects;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
+using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Models.Fields;
 using TaskManagementSystem.SharedLib.ValueObjects;
@@ -18,7 +19,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         // Private constructor to prevent instantiation without using the factory method
     }
 
-    public static async Task<Result<TaskBoardAggregate>> Create(
+    public static async Task<Result<TaskBoardAggregate>> CreateAsync(
         string name,
         string? description,
         Guid organizationId,
@@ -41,7 +42,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             );
         }
 
-        if (! await uniqueNamePolicy.IsUnique(name))
+        if (! await uniqueNamePolicy.IsUnique(name, cancellationToken))
         {
             errors.Add(
                 new(
@@ -56,7 +57,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             return Result<TaskBoardAggregate>.Failure(errors);
         }
 
-        var timestamps = new Timestamps(dateTimeService);
+        var timestamps = Timestamps.FromDateTimeService(dateTimeService);
         var authorInfo = new AuthorInfo(createdById, createdById);
 
         var taskBoard = new TaskBoardAggregate {
@@ -71,7 +72,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         return Result<TaskBoardAggregate>.Success(taskBoard);
     }
 
-    public async Task<Result<TaskBoardColumnModel>> AddColumn(
+    public async Task<Result<TaskBoardColumnModel>> AddColumnAsync(
         string name,
         Guid createdById,
         CancellationToken cancellationToken,
@@ -113,7 +114,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             return Result<TaskBoardColumnModel>.Failure(errors);
         }
 
-        var timestamps = new Timestamps(dateTimeService);
+        var timestamps = Timestamps.FromDateTimeService(dateTimeService);
         var authorInfo = new AuthorInfo(createdById, createdById);
 
         var latestColumnsOrder = this.GetNextColumnOrder();
@@ -128,6 +129,183 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         };
 
         Columns.Add(column);
+
+        return Result<TaskBoardColumnModel>.Success(column);
+    }
+
+    public async Task<Result<TaskBoardColumnModel>> UpdateColumnAsync(
+        Guid columnId,
+        Guid updatedById,
+        CancellationToken cancellationToken,
+        IValidColumnNamePolicy namePolicy,
+        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy,
+        IDateTimeService dateTimeService,
+        int order = 0,
+        string name = ""
+        )
+    {
+        var column = Columns.FirstOrDefault(c => c.Id == columnId);
+
+        if (column == null)
+        {
+            throw new AppException(
+                statusCode: AppExceptionStatusCode.NotFound,
+                message: AppExceptionErrorMessages.NotFound
+            );
+        }
+        Result<TaskBoardColumnModel> result = Result<TaskBoardColumnModel>.Empty();
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            var localResult = await RenameColumnAsync(
+                column: column,
+                newName: name,
+                updatedById: updatedById,
+                cancellationToken: cancellationToken,
+                namePolicy: namePolicy,
+                uniqueNamePolicy: uniqueNamePolicy,
+                dateTimeService: dateTimeService
+            );
+
+            if (localResult.IsFailure && localResult.ErrorDetails.Any())
+            {
+                result = result.Merge(localResult);
+            }
+        }
+
+        if (order != 0)
+        {
+            var localResult = ReorderColumn(
+                column: column,
+                newOrder: order,
+                updatedById: updatedById,
+                cancellationToken: cancellationToken,
+                dateTimeService: dateTimeService
+            );
+            if (localResult.IsFailure && localResult.ErrorDetails.Any())
+            {
+                result = result.Merge(localResult);
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<Result<TaskBoardColumnModel>> RenameColumnAsync(
+        TaskBoardColumnModel column,
+        string newName,
+        Guid updatedById,
+        CancellationToken cancellationToken,
+        IValidColumnNamePolicy namePolicy,
+        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy,
+        IDateTimeService dateTimeService
+        )
+    {
+        var errors = new List<AppExceptionDetail>();
+
+        if (newName == column.Name)
+        {
+            return Result<TaskBoardColumnModel>.Success(column);
+        }
+
+        if (!namePolicy.IsValid(newName))
+        {
+            errors.Add(
+                new(
+                    AppExceptionStatusCode.InvalidFormat,
+                    TaskColumnField.Name
+                )
+            );
+        }
+
+        if (
+            !await uniqueNamePolicy.IsUniqueAsync(
+                taskBoardId: Id,
+                columnName: newName,
+                cancellationToken: cancellationToken,
+                columnId: column.Id)
+            )
+        {
+            errors.Add(
+                new(
+                    AppExceptionStatusCode.UniqueConstraints,
+                    TaskColumnField.Name
+                )
+            );
+        }
+
+        if (errors.Any())
+        {
+            return Result<TaskBoardColumnModel>.Failure(errors);
+        }
+
+        column.Name = newName;
+        column.Timestamps.Touch(dateTimeService);
+        column.AuthorInfo.Update(updatedById);
+
+        return Result<TaskBoardColumnModel>.Success(column);
+    }
+
+    private Result<TaskBoardColumnModel> ReorderColumn(
+        TaskBoardColumnModel column,
+        int newOrder,
+        Guid updatedById,
+        IDateTimeService dateTimeService,
+        CancellationToken cancellationToken)
+    {
+        if (newOrder == column.Order)
+        {
+            return Result<TaskBoardColumnModel>.Success(column);
+        }
+
+        var errors = new List<AppExceptionDetail>();
+
+        if (newOrder < 0)
+        {
+            return Result<TaskBoardColumnModel>.Failure(errors);
+        }
+
+        if (newOrder > Columns.Count)
+        {
+            errors.Add(
+                new(
+                    AppExceptionStatusCode.InvalidValue,
+                    TaskColumnField.Order
+                )
+            );
+        }
+
+        if (errors.Any())
+        {
+            return Result<TaskBoardColumnModel>.Failure(errors);
+        }
+
+        if (newOrder > column.Order)
+        {
+            Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
+                .ToList()
+                .ForEach(c =>
+                {
+                    c.Order--;
+                    c.Timestamps.Touch(dateTimeService);
+                    c.AuthorInfo.Update(updatedById);
+                });
+        }
+        else
+        {
+            Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
+                .ToList()
+                .ForEach(c =>
+                {
+                    c.Order++;
+                    c.Timestamps.Touch(dateTimeService);
+                    c.AuthorInfo.Update(updatedById);
+                });
+        }
+
+        column.Order = newOrder;
+        column.Timestamps.Touch(dateTimeService);
+        column.AuthorInfo.Update(updatedById);
 
         return Result<TaskBoardColumnModel>.Success(column);
     }
