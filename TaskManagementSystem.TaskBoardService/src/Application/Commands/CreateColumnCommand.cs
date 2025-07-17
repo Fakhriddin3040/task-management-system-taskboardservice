@@ -1,16 +1,16 @@
 using MediatR;
 using TaskManagementSystem.SharedLib.Handlers;
-using TaskManagementSystem.TaskBoardService.Application.Results;
+using TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 
 namespace TaskManagementSystem.TaskBoardService.Application.Commands;
 
 
-public class TaskBoardAddColumnCommand : IRequest<Result<TaskBoardAddColumnResult>>
+public class CreateColumnCommand : IRequest<Result<CreateColumnCommandResult>>
 {
     public Guid BoardId { get; set; }
     public string Name { get; set; }
 
-    public TaskBoardAddColumnCommand(Guid boardId, string name)
+    public CreateColumnCommand(Guid boardId, string name)
     {
         BoardId = boardId;
         Name = name;

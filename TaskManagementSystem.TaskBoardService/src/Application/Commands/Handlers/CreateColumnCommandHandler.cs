@@ -5,15 +5,15 @@ using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Providers.Interfaces;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
-using TaskManagementSystem.TaskBoardService.Application.Results;
+using TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
 
-namespace TaskManagementSystem.TaskBoardService.Application.CommandHandlers;
+namespace TaskManagementSystem.TaskBoardService.Application.Commands.Handlers;
 
 
-public class TaskBoardAddColumnCommandHandler : IRequestHandler<TaskBoardAddColumnCommand, Result<TaskBoardAddColumnResult>>
+public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, Result<CreateColumnCommandResult>>
 {
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IValidColumnNamePolicy _validColumnNamePolicy;
@@ -21,7 +21,7 @@ public class TaskBoardAddColumnCommandHandler : IRequestHandler<TaskBoardAddColu
     private readonly IDateTimeService _dateTimeService;
     private readonly ExecutionContext _context;
 
-    public TaskBoardAddColumnCommandHandler(
+    public CreateColumnCommandHandler(
         ITaskBoardRepository boardRepository,
         IExecutionContextProvider contextProvider,
         IValidColumnNamePolicy validColumnNamePolicy,
@@ -36,7 +36,7 @@ public class TaskBoardAddColumnCommandHandler : IRequestHandler<TaskBoardAddColu
         _dateTimeService = dateTimeService;
     }
 
-    public async Task<Result<TaskBoardAddColumnResult>> Handle(TaskBoardAddColumnCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateColumnCommandResult>> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
     {
         var board = await _boardRepository.GetByIdAsync(request.BoardId, cancellationToken);
 
@@ -59,12 +59,12 @@ public class TaskBoardAddColumnCommandHandler : IRequestHandler<TaskBoardAddColu
 
         if (result.IsFailure)
         {
-            return Result<TaskBoardAddColumnResult>.Failure(result.ErrorDetails);
+            return Result<CreateColumnCommandResult>.Failure(result.ErrorDetails);
         }
         await _boardRepository.UpdateAsync(board, cancellationToken);
         await _boardRepository.SaveChangesAsync(cancellationToken);
 
-        return Result<TaskBoardAddColumnResult>.Success(
+        return Result<CreateColumnCommandResult>.Success(
             new(
                 id: result.Value.Id,
                 order: result.Value.Order

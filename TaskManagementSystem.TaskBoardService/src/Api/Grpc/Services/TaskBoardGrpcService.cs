@@ -26,7 +26,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
     {
         _logger.LogInformation("Creating task board with name: {Name}", request.Name);
 
-        var command = new TaskBoardCreateCommand(
+        var command = new CreateBoardCommand(
             name: request.Name,
             description: request.Description
         );
@@ -49,7 +49,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger.LogInformation(
             "Creating task board column with name: {Name} for board ID: {BoardId}", request.Name, request.TaskBoardId
             );
-        var command = new TaskBoardAddColumnCommand(
+        var command = new CreateColumnCommand(
             boardId: Guid.Parse(request.TaskBoardId),
             name: request.Name
         );

@@ -4,31 +4,31 @@ using TaskManagementSystem.SharedLib.DTO;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Providers.Interfaces;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
-using TaskManagementSystem.TaskBoardService.Application.Results;
+using TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 using TaskManagementSystem.TaskBoardService.Core.Aggregates;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
 
-namespace TaskManagementSystem.TaskBoardService.Application.CommandHandlers;
+namespace TaskManagementSystem.TaskBoardService.Application.Commands.Handlers;
 
 
-public class TaskBoardCreateCommandHandler : IRequestHandler<TaskBoardCreateCommand, Result<TaskBoardCreateResult>>
+public class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, Result<CreateBoardCommandResult>>
 {
     private readonly ExecutionContext _executionContext;
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IDateTimeService _dateTimeService;
     private readonly IUniqueTaskBoardNamePolicy _uniqueNamePolicy;
     private readonly IValidBoardNamePolicy _namePolicy;
-    private readonly ILogger<TaskBoardCreateCommandHandler> _logger;
+    private readonly ILogger<CreateBoardCommandHandler> _logger;
 
-    public TaskBoardCreateCommandHandler(
+    public CreateBoardCommandHandler(
         IExecutionContextProvider executionContextProvider,
         IDateTimeService dateTimeService,
         IUniqueTaskBoardNamePolicy uniqueNamePolicy,
         ITaskBoardRepository taskBoardRepository,
         IValidBoardNamePolicy namePolicy,
-        ILogger<TaskBoardCreateCommandHandler> logger)
+        ILogger<CreateBoardCommandHandler> logger)
     {
         _executionContext = executionContextProvider.GetContext();
         _dateTimeService = dateTimeService;
@@ -38,7 +38,7 @@ public class TaskBoardCreateCommandHandler : IRequestHandler<TaskBoardCreateComm
         _logger = logger;
     }
 
-    public async Task<Result<TaskBoardCreateResult>> Handle(TaskBoardCreateCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateBoardCommandResult>> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
     {
         var result = await TaskBoardAggregate.CreateAsync(
             name: request.Name,
@@ -53,13 +53,13 @@ public class TaskBoardCreateCommandHandler : IRequestHandler<TaskBoardCreateComm
 
         if (result.IsFailure)
         {
-            return Result<TaskBoardCreateResult>.Failure(result.ErrorDetails);
+            return Result<CreateBoardCommandResult>.Failure(result.ErrorDetails);
         }
 
         await _boardRepository.CreateAsync(result.Value, cancellationToken);
         await _boardRepository.SaveChangesAsync(cancellationToken);
 
-        return Result<TaskBoardCreateResult>.Success(
+        return Result<CreateBoardCommandResult>.Success(
             new (result.Value.Id)
         );
     }

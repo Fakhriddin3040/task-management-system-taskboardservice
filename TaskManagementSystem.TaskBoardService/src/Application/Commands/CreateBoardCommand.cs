@@ -1,16 +1,16 @@
 using MediatR;
 using TaskManagementSystem.SharedLib.Handlers;
-using TaskManagementSystem.TaskBoardService.Application.Results;
+using TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 
 namespace TaskManagementSystem.TaskBoardService.Application.Commands;
 
 
-public class TaskBoardCreateCommand : IRequest<Result<TaskBoardCreateResult>>
+public class CreateBoardCommand : IRequest<Result<CreateBoardCommandResult>>
 {
     public string Name { get; set; }
     public string? Description { get; set; }
 
-    public TaskBoardCreateCommand(string name, string? description)
+    public CreateBoardCommand(string name, string? description)
     {
         Name = name;
         Description = description;
