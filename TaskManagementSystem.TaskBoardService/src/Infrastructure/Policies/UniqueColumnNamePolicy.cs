@@ -4,7 +4,7 @@ using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 namespace TaskManagementSystem.TaskBoardService.Infrastructure.Policies;
 
 
-public class UniqueColumnNamePolicy : IUniqueTaskBoardColumnNamePolicy
+public class UniqueColumnNamePolicy : IUniqueColumnNamePolicy
 {
     private readonly ITaskBoardRepository _taskBoardRepository;
 

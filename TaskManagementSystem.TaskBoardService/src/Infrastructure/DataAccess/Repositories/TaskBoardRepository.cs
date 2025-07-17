@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Linq.Expressions;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.EntityFrameworkCore;
@@ -25,21 +24,27 @@ public class TaskBoardRepository : ITaskBoardRepository
             .Include(b => b.Columns)
             .ToListAsync(cancellationToken);
     }
+    public async Task<TaskBoardAggregate?> GetByColumnIdAsync(Guid columnId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.TaskBoards
+            .Where(b => b.Columns.Any(c => c.Id == columnId))
+            .Include(b => b.Columns)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
     public async Task<TaskBoardAggregate?> GetByIdAsync(Guid taskBoardId, CancellationToken cancellationToken)
     {
         return await _dbContext.TaskBoards
             .Where(b => b.Id == taskBoardId)
             .Include(b => b.Columns)
-            .SingleOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
     }
     public async Task CreateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken)
     {
         await _dbContext.TaskBoards.AddAsync(taskBoard, cancellationToken);
     }
-    public Task UpdateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken)
+    public void UpdateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken)
     {
         _dbContext.TaskBoards.Update(taskBoard);
-        return Task.CompletedTask;
     }
     public async Task DeleteAsync(Guid taskBoardId, CancellationToken cancellationToken)
     {

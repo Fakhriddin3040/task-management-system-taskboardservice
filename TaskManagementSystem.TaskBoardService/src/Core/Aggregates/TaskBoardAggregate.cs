@@ -78,7 +78,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         CancellationToken cancellationToken,
         IDateTimeService dateTimeService,
         IValidColumnNamePolicy namePolicy,
-        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy
+        IUniqueColumnNamePolicy uniqueNamePolicy
     )
     {
         var errors = new List<AppExceptionDetail>();
@@ -121,6 +121,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
         var column = new TaskBoardColumnModel
         {
+            BoardId = Id,
             Id = Guid.Empty,
             Name = name,
             AuthorInfo = authorInfo,
@@ -136,12 +137,12 @@ public sealed class TaskBoardAggregate : TaskBoardModel
     public async Task<Result<TaskBoardColumnModel>> UpdateColumnAsync(
         Guid columnId,
         Guid updatedById,
+        string name,
         CancellationToken cancellationToken,
         IValidColumnNamePolicy namePolicy,
-        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy,
+        IUniqueColumnNamePolicy uniqueNamePolicy,
         IDateTimeService dateTimeService,
-        int order = 0,
-        string name = ""
+        int order = 0
         )
     {
         var column = Columns.FirstOrDefault(c => c.Id == columnId);
@@ -153,7 +154,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
                 message: AppExceptionErrorMessages.NotFound
             );
         }
-        Result<TaskBoardColumnModel> result = Result<TaskBoardColumnModel>.Empty();
+        var result = Result<TaskBoardColumnModel>.Empty();
 
         if (!string.IsNullOrEmpty(name))
         {
@@ -169,7 +170,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
             if (localResult.IsFailure && localResult.ErrorDetails.Any())
             {
-                result = result.Merge(localResult);
+                result = localResult;
             }
         }
 
@@ -188,7 +189,12 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             }
         }
 
-        return result;
+        if (result.ErrorDetails.Any())
+        {
+            return result;
+        }
+
+        return Result<TaskBoardColumnModel>.Success(column);
     }
 
     private async Task<Result<TaskBoardColumnModel>> RenameColumnAsync(
@@ -197,7 +203,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         Guid updatedById,
         CancellationToken cancellationToken,
         IValidColumnNamePolicy namePolicy,
-        IUniqueTaskBoardColumnNamePolicy uniqueNamePolicy,
+        IUniqueColumnNamePolicy uniqueNamePolicy,
         IDateTimeService dateTimeService
         )
     {

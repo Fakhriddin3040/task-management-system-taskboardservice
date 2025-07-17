@@ -17,7 +17,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
 {
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IValidColumnNamePolicy _validColumnNamePolicy;
-    private readonly IUniqueTaskBoardColumnNamePolicy _uniqueColumnNamePolicy;
+    private readonly IUniqueColumnNamePolicy _uniqueColumnNamePolicy;
     private readonly IDateTimeService _dateTimeService;
     private readonly ExecutionContext _context;
 
@@ -25,7 +25,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
         ITaskBoardRepository boardRepository,
         IExecutionContextProvider contextProvider,
         IValidColumnNamePolicy validColumnNamePolicy,
-        IUniqueTaskBoardColumnNamePolicy uniqueColumnNamePolicy,
+        IUniqueColumnNamePolicy uniqueColumnNamePolicy,
         IDateTimeService dateTimeService
         )
     {
@@ -61,7 +61,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
         {
             return Result<CreateColumnCommandResult>.Failure(result.ErrorDetails);
         }
-        await _boardRepository.UpdateAsync(board, cancellationToken);
+        _boardRepository.UpdateAsync(board, cancellationToken);
         await _boardRepository.SaveChangesAsync(cancellationToken);
 
         return Result<CreateColumnCommandResult>.Success(

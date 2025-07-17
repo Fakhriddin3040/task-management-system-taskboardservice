@@ -1,7 +1,7 @@
 namespace TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 
 
-public interface IUniqueTaskBoardColumnNamePolicy
+public interface IUniqueColumnNamePolicy
 {
     Task<bool> IsUniqueAsync(string columnName, Guid taskBoardId, CancellationToken cancellationToken,Guid? columnId);
 }

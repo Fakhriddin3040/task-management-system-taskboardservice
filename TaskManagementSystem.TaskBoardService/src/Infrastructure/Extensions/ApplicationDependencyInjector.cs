@@ -23,7 +23,7 @@ public static class ApplicationDependencyInjector
         services.AddScoped<IExecutionContextProvider, GrpcExecutionContextProvider>();
         services.AddScoped<ExecutionContextInitializerGrpcServerInterceptor>();
         services.AddScoped<IValidColumnNamePolicy, ValidColumnNamePolicy>();
-        services.AddScoped<IUniqueTaskBoardColumnNamePolicy, UniqueColumnNamePolicy>();
+        services.AddScoped<IUniqueColumnNamePolicy, UniqueColumnNamePolicy>();
         services.AddMediatR(options =>
         {
             options.RegisterServicesFromAssemblyContaining<TaskBoardGrpcService>();

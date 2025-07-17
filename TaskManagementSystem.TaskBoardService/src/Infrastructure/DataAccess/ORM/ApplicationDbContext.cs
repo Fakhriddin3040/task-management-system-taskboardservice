@@ -74,11 +74,6 @@ public class ApplicationDbContext : DbContext
         builder.HasKey(e => e.Id);
 
         builder.HasIndex(e => new {
-                e.BoardId,
-                e.Order
-            })
-            .IsUnique();
-        builder.HasIndex(e => new {
             e.Name,
             e.BoardId
         }).IsUnique();

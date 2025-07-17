@@ -12,7 +12,7 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 namespace TaskManagementSystem.DashboardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250715172959_Init>")]
+    [Migration("20250717200240_Init>")]
     partial class Init
     {
         /// <inheritdoc />
@@ -137,10 +137,6 @@ namespace TaskManagementSystem.DashboardService.Migrations
 
                             b1.HasIndex("board_id")
                                 .HasDatabaseName("ix_task_board_columns_board_id");
-
-                            b1.HasIndex("BoardId", "Order")
-                                .IsUnique()
-                                .HasDatabaseName("ix_task_board_columns_board_id_order");
 
                             b1.HasIndex("Name", "BoardId")
                                 .IsUnique()

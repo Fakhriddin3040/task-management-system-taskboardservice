@@ -60,12 +60,6 @@ namespace TaskManagementSystem.DashboardService.Migrations
                 column: "board_id1");
 
             migrationBuilder.CreateIndex(
-                name: "ix_task_board_columns_board_id_order",
-                table: "task_board_columns",
-                columns: new[] { "board_id", "order" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ix_task_board_columns_name_board_id",
                 table: "task_board_columns",
                 columns: new[] { "name", "board_id" },

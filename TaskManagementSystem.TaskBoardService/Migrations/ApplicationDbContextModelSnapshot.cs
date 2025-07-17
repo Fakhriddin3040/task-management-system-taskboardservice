@@ -135,10 +135,6 @@ namespace TaskManagementSystem.DashboardService.Migrations
                             b1.HasIndex("board_id")
                                 .HasDatabaseName("ix_task_board_columns_board_id");
 
-                            b1.HasIndex("BoardId", "Order")
-                                .IsUnique()
-                                .HasDatabaseName("ix_task_board_columns_board_id_order");
-
                             b1.HasIndex("Name", "BoardId")
                                 .IsUnique()
                                 .HasDatabaseName("ix_task_board_columns_name_board_id");

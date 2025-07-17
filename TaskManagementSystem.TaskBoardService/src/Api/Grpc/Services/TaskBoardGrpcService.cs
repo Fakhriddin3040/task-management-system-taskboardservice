@@ -1,12 +1,9 @@
-
-
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using MediatR;
 using TaskManagementSystem.GrpcLib.TaskBoardService.Types;
-using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
-using TaskManagementSystem.TaskBoardService.Core.Models;
 
 namespace TaskManagementSystem.TaskBoardService.Api.Grpc.Services;
 
@@ -66,5 +63,26 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
             Id = result.Value.Id.ToString(),
             Order = result.Value.Order
         };
+    }
+
+    public override async Task<Empty> UpdateColumn(TaskBoardColumnUpdateRequest request, ServerCallContext context)
+    {
+        var command = new UpdateColumnCommand(
+            columnId: Guid.Parse(request.Id),
+            name: request.Name,
+            order: request.Order
+        );
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsFailure)
+        {
+            _logger.LogError("Failed to update task board column. Details in json format: {ErrorDetails}", result.ErrorDetailsToJson());
+            throw result.CreateExceptionFrom();
+        }
+
+        _logger.LogInformation("Updated task board column with ID: {ColumnId}", request.Id);
+
+        return new Empty();
     }
 }
