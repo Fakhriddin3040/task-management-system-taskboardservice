@@ -21,8 +21,8 @@ namespace TaskManagementSystem.DashboardService.Migrations
                     organization_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_by_id = table.Column<Guid>(type: "uuid", nullable: false),
                     updated_by_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    created_at = table.Column<long>(type: "bigint", nullable: false),
+                    updated_at = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -39,8 +39,8 @@ namespace TaskManagementSystem.DashboardService.Migrations
                     board_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_by_id = table.Column<Guid>(type: "uuid", nullable: false),
                     updated_by_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    created_at = table.Column<long>(type: "bigint", nullable: false),
+                    updated_at = table.Column<long>(type: "bigint", nullable: false),
                     board_id1 = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>

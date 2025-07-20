@@ -42,10 +42,8 @@ public class GetBoardByIdQueryHandler : IRequestHandler<GetBoardByIdQuery, Resul
             Id: board.Id,
             Name: board.Name,
             Description: board.Description,
-            CreatedById: board.AuthorInfo.CreatedById,
-            UpdatedById: board.AuthorInfo.UpdatedById,
-            CreatedAt: board.Timestamps.CreatedAt,
-            UpdatedAt: board.Timestamps.UpdatedAt,
+            Timestamps: board.Timestamps,
+            AuthorInfo: board.AuthorInfo,
             Columns: [
                 ..board.Columns.Select(col => ColumnListDto.FromModel(col)
                 )

@@ -87,12 +87,12 @@ namespace TaskManagementSystem.DashboardService.Migrations
                                 .HasColumnType("uuid")
                                 .HasColumnName("id");
 
-                            b1.Property<DateTime>("CreatedAt")
-                                .HasColumnType("timestamp with time zone")
+                            b1.Property<long>("CreatedAt")
+                                .HasColumnType("bigint")
                                 .HasColumnName("created_at");
 
-                            b1.Property<DateTime>("UpdatedAt")
-                                .HasColumnType("timestamp with time zone")
+                            b1.Property<long>("UpdatedAt")
+                                .HasColumnType("bigint")
                                 .HasColumnName("updated_at");
 
                             b1.HasKey("TaskBoardAggregateId");
@@ -178,12 +178,12 @@ namespace TaskManagementSystem.DashboardService.Migrations
                                         .HasColumnType("uuid")
                                         .HasColumnName("id");
 
-                                    b2.Property<DateTime>("CreatedAt")
-                                        .HasColumnType("timestamp with time zone")
+                                    b2.Property<long>("CreatedAt")
+                                        .HasColumnType("bigint")
                                         .HasColumnName("created_at");
 
-                                    b2.Property<DateTime>("UpdatedAt")
-                                        .HasColumnType("timestamp with time zone")
+                                    b2.Property<long>("UpdatedAt")
+                                        .HasColumnType("bigint")
                                         .HasColumnName("updated_at");
 
                                     b2.HasKey("TaskBoardColumnModelId");

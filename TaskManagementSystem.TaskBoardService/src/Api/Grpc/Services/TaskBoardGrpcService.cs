@@ -1,4 +1,3 @@
-using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using MediatR;
@@ -104,10 +103,10 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
             Id = result.Value.Id.ToString(),
             Name = result.Value.Name,
             Description = result.Value.Description,
-            CreatedAt = result.Value.CreatedAt.ToTimestamp(),
-            UpdatedAt = result.Value.UpdatedAt.ToTimestamp(),
-            CreatedById = result.Value.CreatedById.ToString(),
-            UpdatedById = result.Value.UpdatedById.ToString()
+            CreatedById = result.Value.AuthorInfo.CreatedById.ToString(),
+            UpdatedById = result.Value.AuthorInfo.UpdatedById.ToString(),
+            CreatedAt = result.Value.Timestamps.CreatedAt,
+            UpdatedAt = result.Value.Timestamps.UpdatedAt
         };
 
         response.Columns.AddRange(
@@ -115,10 +114,10 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
                 Id = col.Id.ToString(),
                 Name = col.Name,
                 Order = col.Order,
-                CreatedById = col.CreatedById.ToString(),
-                UpdatedById = col.UpdatedById.ToString(),
-                CreatedAt = col.CreatedAt.ToTimestamp(),
-                UpdatedAt = col.UpdatedAt.ToTimestamp()
+                CreatedById = col.AuthorInfo.CreatedById.ToString(),
+                UpdatedById = col.AuthorInfo.UpdatedById.ToString(),
+                CreatedAt = col.Timestamps.CreatedAt,
+                UpdatedAt = col.Timestamps.UpdatedAt
             })
         );
 

@@ -1,18 +1,10 @@
 namespace TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 
 
-public sealed record UpdateBoardCommandResult
+public sealed record UpdateBoardCommandResult(Guid BoardId, string Name, string Description)
 {
-    public required Guid BoardId { get; init; }
-    public required string Name { get; init; }
-    public required string Description { get; init; }
-    public required DateTimeOffset UpdatedAt { get; init; }
+    public required Guid BoardId { get; init; } = BoardId;
+    public required string Name { get; init; } = Name;
+    public required string Description { get; init; } = Description;
 
-    public UpdateBoardCommandResult(Guid boardId, string name, string description, DateTimeOffset updatedAt)
-    {
-        BoardId = boardId;
-        Name = name;
-        Description = description;
-        UpdatedAt = updatedAt;
-    }
 }

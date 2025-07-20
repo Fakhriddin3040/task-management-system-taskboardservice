@@ -1,3 +1,5 @@
+using TaskManagementSystem.AuthService.Core.ValueObjects;
+using TaskManagementSystem.SharedLib.ValueObjects;
 using TaskManagementSystem.TaskBoardService.Core.Models;
 
 namespace TaskManagementSystem.TaskBoardService.Application.DTO;
@@ -7,11 +9,8 @@ public sealed record ColumnListDto(
     Guid Id,
     string Name,
     int Order,
-    Guid CreatedById,
-    Guid UpdatedById,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
-)
+    AuthorInfo AuthorInfo,
+    Timestamps Timestamps)
 {
     public static ColumnListDto FromModel(TaskBoardColumnModel model)
     {
@@ -19,10 +18,8 @@ public sealed record ColumnListDto(
             Id: model.Id,
             Name: model.Name,
             Order: model.Order,
-            CreatedById: model.AuthorInfo.CreatedById,
-            UpdatedById: model.AuthorInfo.UpdatedById,
-            CreatedAt: model.Timestamps.CreatedAt,
-            UpdatedAt: model.Timestamps.UpdatedAt
+            Timestamps: model.Timestamps,
+            AuthorInfo: model.AuthorInfo
         );
     }
 }
