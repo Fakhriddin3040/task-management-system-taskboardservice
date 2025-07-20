@@ -1,9 +1,11 @@
+using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using MediatR;
 using TaskManagementSystem.GrpcLib.TaskBoardService.Types;
 using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
+using TaskManagementSystem.TaskBoardService.Application.Queries;
 
 namespace TaskManagementSystem.TaskBoardService.Api.Grpc.Services;
 
@@ -19,7 +21,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger = logger;
     }
 
-    public override async Task<TaskBoardCreateResponse> Create(TaskBoardCreateRequest request, ServerCallContext context)
+    public override async Task<TaskBoardCreateProtoResponse> Create(TaskBoardCreateProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation("Creating task board with name: {Name}", request.Name);
 
@@ -36,12 +38,12 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         }
         _logger.LogInformation("Created task board with ID: {TaskBoardId}", result.Value.TaskBoardId);
 
-        return new TaskBoardCreateResponse {
+        return new TaskBoardCreateProtoResponse {
             Id = result.Value.TaskBoardId.ToString()
         };
     }
 
-    public override async Task<TaskBoardColumnCreateResponse> CreateColumn(TaskBoardColumnCreateRequest request, ServerCallContext context)
+    public override async Task<TaskBoardColumnCreateProtoResponse> CreateColumn(TaskBoardColumnCreateProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation(
             "Creating task board column with name: {Name} for board ID: {BoardId}", request.Name, request.TaskBoardId
@@ -59,13 +61,13 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
             throw result.CreateExceptionFrom();
         }
 
-        return new TaskBoardColumnCreateResponse {
+        return new TaskBoardColumnCreateProtoResponse {
             Id = result.Value.Id.ToString(),
             Order = result.Value.Order
         };
     }
 
-    public override async Task<Empty> UpdateColumn(TaskBoardColumnUpdateRequest request, ServerCallContext context)
+    public override async Task<Empty> UpdateColumn(TaskBoardColumnUpdateProtoRequest request, ServerCallContext context)
     {
         var command = new UpdateColumnCommand(
             columnId: Guid.Parse(request.Id),
@@ -84,5 +86,42 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger.LogInformation("Updated task board column with ID: {ColumnId}", request.Id);
 
         return new Empty();
+    }
+
+    public override async Task<TaskBoardDetailedProto> GetById(TaskBoardGetProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Handling 'Get board by id'. Board id: {}", request.Id);
+        var command = new GetBoardByIdQuery(Id: Guid.Parse(request.Id));
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsFailure)
+        {
+            _logger.LogError("Failed to complete the query. Details in json format: {ErrorDetails}.", result.ErrorDetailsToJson());
+        }
+
+        var response = new TaskBoardDetailedProto {
+            Id = result.Value.Id.ToString(),
+            Name = result.Value.Name,
+            Description = result.Value.Description,
+            CreatedAt = result.Value.CreatedAt.ToTimestamp(),
+            UpdatedAt = result.Value.UpdatedAt.ToTimestamp(),
+            CreatedById = result.Value.CreatedById.ToString(),
+            UpdatedById = result.Value.UpdatedById.ToString()
+        };
+
+        response.Columns.AddRange(
+            result.Value.Columns.Select(col => new TaskBoardColumnProto {
+                Id = col.Id.ToString(),
+                Name = col.Name,
+                Order = col.Order,
+                CreatedById = col.CreatedById.ToString(),
+                UpdatedById = col.UpdatedById.ToString(),
+                CreatedAt = col.CreatedAt.ToTimestamp(),
+                UpdatedAt = col.UpdatedAt.ToTimestamp()
+            })
+        );
+
+        return response;
     }
 }

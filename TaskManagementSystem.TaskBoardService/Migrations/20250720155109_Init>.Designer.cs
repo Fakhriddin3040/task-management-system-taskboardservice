@@ -12,7 +12,7 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 namespace TaskManagementSystem.DashboardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250717200240_Init>")]
+    [Migration("20250720155109_Init>")]
     partial class Init
     {
         /// <inheritdoc />
