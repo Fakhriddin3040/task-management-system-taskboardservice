@@ -45,7 +45,7 @@ public class GetBoardByIdQueryHandler : IRequestHandler<GetBoardByIdQuery, Resul
             Timestamps: board.Timestamps,
             AuthorInfo: board.AuthorInfo,
             Columns: [
-                ..board.Columns.Select(col => ColumnListDto.FromModel(col)
+                ..board.Columns.Select(ColumnListDto.FromModel
                 )
             ]
         );

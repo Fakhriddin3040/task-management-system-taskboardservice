@@ -3,8 +3,10 @@ using Grpc.Core;
 using MediatR;
 using TaskManagementSystem.GrpcLib.TaskBoardService.Types;
 using TaskManagementSystem.SharedLib.Extensions;
+using TaskManagementSystem.SharedLib.Providers.Interfaces;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
 using TaskManagementSystem.TaskBoardService.Application.Queries;
+using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
 
 namespace TaskManagementSystem.TaskBoardService.Api.Grpc.Services;
 
@@ -87,16 +89,50 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         return new Empty();
     }
 
+    public override async Task<TaskBoardListProtoResponse> GetByIds(TaskBoardListProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Handling '{}' request with ids: {}", nameof(GetByIds), string.Join(", ", request.Ids));
+        var query = new GetBoardsByIdsQuery(
+            Ids: [..request.Ids.Select(Guid.Parse)]);
+
+        var result = await _mediator.Send(query);
+
+        if (result.IsFailure)
+        {
+            _logger.LogError("Request {} failed.", nameof(GetByIds));
+            throw result.CreateExceptionFrom();
+        }
+
+        var response = new TaskBoardListProtoResponse();
+
+        response.TaskBoards.AddRange(
+            [
+                ..result.Value.Boards.Select(b => new TaskBoardProto {
+                    Id = b.Id.ToString(),
+                    Name = b.Name,
+                    Description = b.Description,
+                    CreatedById = b.AuthorInfo.CreatedById.ToString(),
+                    UpdatedById = b.AuthorInfo.UpdatedById.ToString(),
+                    CreatedAt = b.Timestamps.CreatedAt,
+                    UpdatedAt = b.Timestamps.UpdatedAt,
+                })
+            ]
+        );
+
+        return response;
+    }
+
     public override async Task<TaskBoardDetailedProto> GetById(TaskBoardGetProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation("Handling 'Get board by id'. Board id: {}", request.Id);
-        var command = new GetBoardByIdQuery(Id: Guid.Parse(request.Id));
+        var query = new GetBoardByIdQuery(Id: Guid.Parse(request.Id));
 
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(query);
 
         if (result.IsFailure)
         {
             _logger.LogError("Failed to complete the query. Details in json format: {ErrorDetails}.", result.ErrorDetailsToJson());
+            throw result.CreateExceptionFrom();
         }
 
         var response = new TaskBoardDetailedProto {
@@ -119,6 +155,40 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
                 CreatedAt = col.Timestamps.CreatedAt,
                 UpdatedAt = col.Timestamps.UpdatedAt
             })
+        );
+
+        return response;
+    }
+
+    public override async Task<TaskBoardGetAllColumnsResponse> GetAllColumns(TaskBoardGetAllColumnsRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Handling {} request with board id: {}", nameof(GetAllColumns), request.BoardId);
+
+        var query = new GetAllColumnsQuery(
+            BoardId: Guid.Parse(request.BoardId)
+        );
+
+        var result = await _mediator.Send(query);
+
+        if (result.IsFailure)
+        {
+            _logger.LogError("Failed to complete the query. Details in json format: {}", result.ErrorDetailsToJson());
+            throw result.CreateExceptionFrom();
+        }
+
+        var response = new TaskBoardGetAllColumnsResponse();
+
+        response.Columns.AddRange(
+            [
+                ..result.Value.Columns.Select(c => new TaskBoardColumnProto {
+                    Id = c.Id.ToString(),
+                    Name = c.Name,
+                    Order = c.Order,
+                    CreatedById = c.AuthorInfo.CreatedById.ToString(),
+                    UpdatedById = c.AuthorInfo.UpdatedById.ToString(),
+                    CreatedAt = c.Timestamps.CreatedAt,
+                })
+            ]
         );
 
         return response;

@@ -5,4 +5,5 @@ using TaskManagementSystem.TaskBoardService.Application.Queries.Results;
 namespace TaskManagementSystem.TaskBoardService.Application.Queries;
 
 
-public sealed record GetAllColumnsQuery(Guid BoardId) : IRequest<Result<GetAllColumnsQueryResult>>;
+
+public sealed record GetBoardsByIdsQuery(IEnumerable<Guid> Ids) : IRequest<Result<GetBoardsByIdsQueryResult>>;

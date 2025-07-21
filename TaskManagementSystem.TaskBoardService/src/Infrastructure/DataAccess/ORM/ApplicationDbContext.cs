@@ -69,7 +69,10 @@ public class ApplicationDbContext : DbContext
         builder.ToTable("task_board_columns");
 
         builder.WithOwner()
-            .HasForeignKey("board_id");
+            .HasForeignKey(c => c.BoardId);
+
+        builder.Property(e => e.BoardId)
+            .HasColumnName("board_id");
 
         builder.HasKey(e => e.Id);
 

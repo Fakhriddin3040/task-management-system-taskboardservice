@@ -12,7 +12,7 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 namespace TaskManagementSystem.DashboardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250720185602_Init>")]
+    [Migration("20250721193440_Init>")]
     partial class Init
     {
         /// <inheritdoc />
@@ -61,52 +61,6 @@ namespace TaskManagementSystem.DashboardService.Migrations
 
             modelBuilder.Entity("TaskManagementSystem.TaskBoardService.Core.Aggregates.TaskBoardAggregate", b =>
                 {
-                    b.OwnsOne("TaskManagementSystem.SharedLib.ValueObjects.AuthorInfo", "AuthorInfo", b1 =>
-                        {
-                            b1.Property<Guid>("TaskBoardAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<Guid>("CreatedById")
-                                .HasColumnType("uuid")
-                                .HasColumnName("created_by_id");
-
-                            b1.Property<Guid>("UpdatedById")
-                                .HasColumnType("uuid")
-                                .HasColumnName("updated_by_id");
-
-                            b1.HasKey("TaskBoardAggregateId");
-
-                            b1.ToTable("task_boards");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TaskBoardAggregateId")
-                                .HasConstraintName("fk_task_boards_task_boards_id");
-                        });
-
-                    b.OwnsOne("TaskManagementSystem.AuthService.Core.ValueObjects.Timestamps", "Timestamps", b1 =>
-                        {
-                            b1.Property<Guid>("TaskBoardAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<long>("CreatedAt")
-                                .HasColumnType("bigint")
-                                .HasColumnName("created_at");
-
-                            b1.Property<long>("UpdatedAt")
-                                .HasColumnType("bigint")
-                                .HasColumnName("updated_at");
-
-                            b1.HasKey("TaskBoardAggregateId");
-
-                            b1.ToTable("task_boards");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TaskBoardAggregateId")
-                                .HasConstraintName("fk_task_boards_task_boards_id");
-                        });
-
                     b.OwnsMany("TaskManagementSystem.TaskBoardService.Core.Models.TaskBoardColumnModel", "Columns", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -128,28 +82,20 @@ namespace TaskManagementSystem.DashboardService.Migrations
                                 .HasColumnType("integer")
                                 .HasColumnName("order");
 
-                            b1.Property<Guid>("board_id")
-                                .HasColumnType("uuid")
-                                .HasColumnName("board_id");
-
                             b1.HasKey("Id")
                                 .HasName("pk_task_board_columns");
 
-                            b1.HasIndex("board_id")
+                            b1.HasIndex("BoardId")
                                 .HasDatabaseName("ix_task_board_columns_board_id");
 
                             b1.HasIndex("Name", "BoardId")
                                 .IsUnique()
                                 .HasDatabaseName("ix_task_board_columns_name_board_id");
 
-                            b1.ToTable("task_board_columns", null, t =>
-                                {
-                                    t.Property("board_id")
-                                        .HasColumnName("board_id1");
-                                });
+                            b1.ToTable("task_board_columns", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("board_id")
+                                .HasForeignKey("BoardId")
                                 .HasConstraintName("fk_task_board_columns_task_boards_board_id");
 
                             b1.OwnsOne("TaskManagementSystem.SharedLib.ValueObjects.AuthorInfo", "AuthorInfo", b2 =>
@@ -203,6 +149,52 @@ namespace TaskManagementSystem.DashboardService.Migrations
 
                             b1.Navigation("Timestamps")
                                 .IsRequired();
+                        });
+
+                    b.OwnsOne("TaskManagementSystem.SharedLib.ValueObjects.AuthorInfo", "AuthorInfo", b1 =>
+                        {
+                            b1.Property<Guid>("TaskBoardAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid>("CreatedById")
+                                .HasColumnType("uuid")
+                                .HasColumnName("created_by_id");
+
+                            b1.Property<Guid>("UpdatedById")
+                                .HasColumnType("uuid")
+                                .HasColumnName("updated_by_id");
+
+                            b1.HasKey("TaskBoardAggregateId");
+
+                            b1.ToTable("task_boards");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TaskBoardAggregateId")
+                                .HasConstraintName("fk_task_boards_task_boards_id");
+                        });
+
+                    b.OwnsOne("TaskManagementSystem.AuthService.Core.ValueObjects.Timestamps", "Timestamps", b1 =>
+                        {
+                            b1.Property<Guid>("TaskBoardAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<long>("CreatedAt")
+                                .HasColumnType("bigint")
+                                .HasColumnName("created_at");
+
+                            b1.Property<long>("UpdatedAt")
+                                .HasColumnType("bigint")
+                                .HasColumnName("updated_at");
+
+                            b1.HasKey("TaskBoardAggregateId");
+
+                            b1.ToTable("task_boards");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TaskBoardAggregateId")
+                                .HasConstraintName("fk_task_boards_task_boards_id");
                         });
 
                     b.Navigation("AuthorInfo")

@@ -40,15 +40,14 @@ namespace TaskManagementSystem.DashboardService.Migrations
                     created_by_id = table.Column<Guid>(type: "uuid", nullable: false),
                     updated_by_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<long>(type: "bigint", nullable: false),
-                    updated_at = table.Column<long>(type: "bigint", nullable: false),
-                    board_id1 = table.Column<Guid>(type: "uuid", nullable: false)
+                    updated_at = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_task_board_columns", x => x.id);
                     table.ForeignKey(
                         name: "fk_task_board_columns_task_boards_board_id",
-                        column: x => x.board_id1,
+                        column: x => x.board_id,
                         principalTable: "task_boards",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -57,7 +56,7 @@ namespace TaskManagementSystem.DashboardService.Migrations
             migrationBuilder.CreateIndex(
                 name: "ix_task_board_columns_board_id",
                 table: "task_board_columns",
-                column: "board_id1");
+                column: "board_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_task_board_columns_name_board_id",
