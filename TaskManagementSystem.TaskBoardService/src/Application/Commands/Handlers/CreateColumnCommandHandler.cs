@@ -42,10 +42,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
 
         if (board == null)
         {
-            throw new AppException(
-                message: AppExceptionErrorMessages.NotFound,
-                statusCode: AppExceptionStatusCode.NotFound
-            );
+            throw AppException.NotFound();
         }
 
         var result = await board.AddColumnAsync(
@@ -61,7 +58,8 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
         {
             return Result<CreateColumnCommandResult>.Failure(result.ErrorDetails);
         }
-        _boardRepository.UpdateAsync(board, cancellationToken);
+
+        _boardRepository.Update(board);
         await _boardRepository.SaveChangesAsync(cancellationToken);
 
         return Result<CreateColumnCommandResult>.Success(

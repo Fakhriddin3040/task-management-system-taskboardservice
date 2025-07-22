@@ -5,6 +5,7 @@ using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Models.Fields;
+using TaskManagementSystem.SharedLib.Structs;
 using TaskManagementSystem.SharedLib.ValueObjects;
 using TaskManagementSystem.TaskBoardService.Core.Extensions;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
@@ -21,13 +22,13 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
     public static async Task<Result<TaskBoardAggregate>> CreateAsync(
         string name,
-        string? description,
+        string description,
         Guid organizationId,
         Guid createdById,
         CancellationToken cancellationToken,
         IDateTimeService dateTimeService,
         IValidBoardNamePolicy namePolicy,
-        IUniqueTaskBoardNamePolicy uniqueNamePolicy
+        IUniqueBoardNamePolicy uniqueNamePolicy
         )
     {
         var errors = new List<AppExceptionDetail>();
@@ -70,6 +71,62 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         };
 
         return Result<TaskBoardAggregate>.Success(taskBoard);
+    }
+
+    public async Task<Result<Unit>> UpdateAsync(
+        string name,
+        string description,
+        Guid updateById,
+        IDateTimeService dateTimeService,
+        IValidBoardNamePolicy namePolicy,
+        IUniqueBoardNamePolicy uniqueNamePolicy,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<AppExceptionDetail>();
+
+        if (!string.IsNullOrEmpty(name) && Name != name)
+        {
+            var isNameValid = namePolicy.IsValid(name);
+
+            if (!isNameValid)
+            {
+                errors.Add(
+                    new(
+                        StatusCode: AppExceptionStatusCode.InvalidFormat,
+                        Field: TaskBoardField.Name
+                    )
+                );
+            }
+            if (isNameValid && !await uniqueNamePolicy.IsUnique(name, cancellationToken))
+            {
+                isNameValid = false;
+                errors.Add(
+                    new(
+                        StatusCode: AppExceptionStatusCode.UniqueConstraints,
+                        Field: TaskBoardField.Name
+                    )
+                );
+            }
+            if (isNameValid)
+            {
+                Name = name;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(description))
+        {
+            Description = description;
+        }
+
+        if (errors.Any())
+        {
+            return Result<Unit>.Failure(errors);
+        }
+
+        Timestamps.Touch(dateTimeService);
+        AuthorInfo.Update(updateById);
+
+        return Result<Unit>.Success(Unit.Value);
     }
 
     public async Task<Result<TaskBoardColumnModel>> AddColumnAsync(
@@ -194,6 +251,9 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             return result;
         }
 
+        AuthorInfo.UpdatedById = updatedById;
+        Timestamps.Touch(dateTimeService);
+
         return Result<TaskBoardColumnModel>.Success(column);
     }
 
@@ -288,25 +348,20 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
         if (newOrder > column.Order)
         {
-            Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
-                .ToList()
-                .ForEach(c =>
-                {
-                    c.Order--;
-                    c.Timestamps.Touch(dateTimeService);
-                    c.AuthorInfo.Update(updatedById);
-                });
+            ModifyColumns(
+                Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
+                    .ToList(), dateTimeService: dateTimeService, updatedById: updatedById, col => col.Order++
+            );
         }
         else
         {
-            Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
-                .ToList()
-                .ForEach(c =>
-                {
-                    c.Order++;
-                    c.Timestamps.Touch(dateTimeService);
-                    c.AuthorInfo.Update(updatedById);
-                });
+            ModifyColumns(
+                columns: Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
+                    .ToList(),
+                dateTimeService: dateTimeService,
+                updatedById: updatedById,
+                col => col.Order--
+            );
         }
 
         column.Order = newOrder;
@@ -314,5 +369,49 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         column.AuthorInfo.Update(updatedById);
 
         return Result<TaskBoardColumnModel>.Success(column);
+    }
+
+    private void ModifyColumns(
+        List<TaskBoardColumnModel> columns,
+        IDateTimeService dateTimeService,
+        Guid updatedById,
+        Action<TaskBoardColumnModel> modifyAction
+    )
+    {
+        columns.ForEach(c =>
+        {
+            modifyAction(c);
+            c.Timestamps.Touch(dateTimeService);
+            c.AuthorInfo.Update(updatedById);
+        });
+    }
+
+    public void RemoveColumn(Guid columnId, Guid updatedById, IDateTimeService dateTimeService)
+    {
+        var column = Columns.FirstOrDefault(c => c.Id == columnId);
+
+        if (column == null)
+        {
+            throw new AppException(
+                statusCode: AppExceptionStatusCode.NotFound,
+                message: AppExceptionErrorMessages.NotFound
+            );
+        }
+
+        var columnsToMove = Columns.Where(c => c.Order > column.Order).ToList();
+
+        if (columnsToMove.Any())
+        {
+            ModifyColumns(
+                columns: columnsToMove,
+                dateTimeService: dateTimeService,
+                updatedById: updatedById,
+                col => col.Order-- // Decrease order of columns after the removed one
+            );
+        }
+
+        Columns.Remove(column);
+        Timestamps.Touch(dateTimeService);
+        AuthorInfo.Update(updatedById);
     }
 }

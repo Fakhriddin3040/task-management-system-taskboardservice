@@ -60,7 +60,7 @@ public class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand, R
             return Result<Unit>.Failure(result.ErrorDetails);
         }
 
-        _boardRepository.UpdateAsync(board, cancellationToken);
+        _boardRepository.Update(board);
 
         await _boardRepository.SaveChangesAsync(cancellationToken);
 

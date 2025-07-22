@@ -17,7 +17,7 @@ public static class ApplicationDependencyInjector
     public static IServiceCollection AddApplicationDependencies(this IServiceCollection services)
     {
         services.AddScoped<IValidBoardNamePolicy, ValidBoardNamePolicy>();
-        services.AddScoped<IUniqueTaskBoardNamePolicy, UniqueBoardNamePolicy>();
+        services.AddScoped<IUniqueBoardNamePolicy, UniqueBoardNamePolicy>();
         services.AddScoped<ITaskBoardRepository, TaskBoardRepository>();
         services.AddSingleton<IDateTimeService, DateTimeService>();
         services.AddScoped<IExecutionContextProvider, GrpcExecutionContextProvider>();

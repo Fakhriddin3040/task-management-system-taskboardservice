@@ -9,7 +9,7 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 
 #nullable disable
 
-namespace TaskManagementSystem.DashboardService.Migrations
+namespace TaskManagementSystem.TaskBoardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20250721193440_Init>")]

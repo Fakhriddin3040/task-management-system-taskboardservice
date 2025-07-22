@@ -1,6 +1,6 @@
-@TaskManagementSystem.DashboardService_HostAddress = http://localhost:5055
+@TaskManagementSystem.TaskBoardService_HostAddress = http://localhost:5055
 
-GET {{TaskManagementSystem.DashboardService_HostAddress}}/weatherforecast/
+GET {{TaskManagementSystem.TaskBoardService_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

@@ -60,7 +60,7 @@ public class TaskBoardRepository : ITaskBoardRepository
         await _dbContext.TaskBoards.AddAsync(taskBoard, cancellationToken);
     }
 
-    public void UpdateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken)
+    public void Update(TaskBoardAggregate taskBoard)
     {
         _dbContext.TaskBoards.Update(taskBoard);
     }

@@ -193,4 +193,42 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
 
         return response;
     }
+
+    public override async Task<Empty> Update(TaskBoardUpdateProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Updating task board with ID: {TaskBoardId}. Provided data: {}", request.Id, request.ToString());
+
+        var command = new UpdateBoardCommand(
+            Id: Guid.Parse(request.Id),
+            Name: request.Name,
+            Description: request.Description
+        );
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsFailure)
+        {
+            _logger.LogError("Failed to update task board. Details in json format: {ErrorDetails}", result.ErrorDetailsToJson());
+            throw result.CreateExceptionFrom();
+        }
+
+        _logger.LogInformation("Updated task board with ID: {TaskBoardId}", request.Id);
+
+        return new Empty();
+    }
+
+    public override async Task<Empty> DeleteColumn(TaskBoardColumnDeleteProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Deleting task board column with ID: {}", request.Id);
+
+        var command = new DeleteColumnCommand(
+            ColumnId: Guid.Parse(request.Id)
+        );
+
+        await _mediator.Send(command);
+
+        _logger.LogInformation("Deleted task board column with ID: {ColumnId}", request.Id);
+
+        return new Empty();
+    }
 }
