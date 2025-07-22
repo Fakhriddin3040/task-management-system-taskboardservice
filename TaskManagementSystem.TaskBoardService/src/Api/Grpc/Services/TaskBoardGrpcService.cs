@@ -216,4 +216,19 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
 
         return new Empty();
     }
+
+    public override async Task<Empty> DeleteColumn(TaskBoardColumnDeleteProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Deleting task board column with ID: {}", request.Id);
+
+        var command = new DeleteColumnCommand(
+            ColumnId: Guid.Parse(request.Id)
+        );
+
+        await _mediator.Send(command);
+
+        _logger.LogInformation("Deleted task board column with ID: {ColumnId}", request.Id);
+
+        return new Empty();
+    }
 }

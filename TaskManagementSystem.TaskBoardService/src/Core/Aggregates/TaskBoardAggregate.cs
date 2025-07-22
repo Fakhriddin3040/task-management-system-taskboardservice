@@ -251,6 +251,9 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             return result;
         }
 
+        AuthorInfo.UpdatedById = updatedById;
+        Timestamps.Touch(dateTimeService);
+
         return Result<TaskBoardColumnModel>.Success(column);
     }
 
@@ -345,25 +348,20 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
         if (newOrder > column.Order)
         {
-            Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
-                .ToList()
-                .ForEach(c =>
-                {
-                    c.Order--;
-                    c.Timestamps.Touch(dateTimeService);
-                    c.AuthorInfo.Update(updatedById);
-                });
+            ModifyColumns(
+                Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
+                    .ToList(), dateTimeService: dateTimeService, updatedById: updatedById, col => col.Order++
+            );
         }
         else
         {
-            Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
-                .ToList()
-                .ForEach(c =>
-                {
-                    c.Order++;
-                    c.Timestamps.Touch(dateTimeService);
-                    c.AuthorInfo.Update(updatedById);
-                });
+            ModifyColumns(
+                columns: Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
+                    .ToList(),
+                dateTimeService: dateTimeService,
+                updatedById: updatedById,
+                col => col.Order--
+            );
         }
 
         column.Order = newOrder;
@@ -371,5 +369,49 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         column.AuthorInfo.Update(updatedById);
 
         return Result<TaskBoardColumnModel>.Success(column);
+    }
+
+    private void ModifyColumns(
+        List<TaskBoardColumnModel> columns,
+        IDateTimeService dateTimeService,
+        Guid updatedById,
+        Action<TaskBoardColumnModel> modifyAction
+    )
+    {
+        columns.ForEach(c =>
+        {
+            modifyAction(c);
+            c.Timestamps.Touch(dateTimeService);
+            c.AuthorInfo.Update(updatedById);
+        });
+    }
+
+    public void RemoveColumn(Guid columnId, Guid updatedById, IDateTimeService dateTimeService)
+    {
+        var column = Columns.FirstOrDefault(c => c.Id == columnId);
+
+        if (column == null)
+        {
+            throw new AppException(
+                statusCode: AppExceptionStatusCode.NotFound,
+                message: AppExceptionErrorMessages.NotFound
+            );
+        }
+
+        var columnsToMove = Columns.Where(c => c.Order > column.Order).ToList();
+
+        if (columnsToMove.Any())
+        {
+            ModifyColumns(
+                columns: columnsToMove,
+                dateTimeService: dateTimeService,
+                updatedById: updatedById,
+                col => col.Order-- // Decrease order of columns after the removed one
+            );
+        }
+
+        Columns.Remove(column);
+        Timestamps.Touch(dateTimeService);
+        AuthorInfo.Update(updatedById);
     }
 }
