@@ -3,10 +3,8 @@ using Grpc.Core;
 using MediatR;
 using TaskManagementSystem.GrpcLib.TaskBoardService.Types;
 using TaskManagementSystem.SharedLib.Extensions;
-using TaskManagementSystem.SharedLib.Providers.Interfaces;
 using TaskManagementSystem.TaskBoardService.Application.Commands;
 using TaskManagementSystem.TaskBoardService.Application.Queries;
-using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
 
 namespace TaskManagementSystem.TaskBoardService.Api.Grpc.Services;
 
@@ -213,6 +211,19 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         }
 
         _logger.LogInformation("Updated task board with ID: {TaskBoardId}", request.Id);
+
+        return new Empty();
+    }
+
+    public override async Task<Empty> Delete(TaskBoardDeleteProtoRequest request, ServerCallContext context)
+    {
+        _logger.LogInformation("Deleting task board with ID: {}", request.Id);
+
+        var command = new DeleteBoardCommand(
+            Id: Guid.Parse(request.Id)
+        );
+
+        await _mediator.Send(command);
 
         return new Empty();
     }

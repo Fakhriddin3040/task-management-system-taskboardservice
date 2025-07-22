@@ -237,7 +237,6 @@ public sealed class TaskBoardAggregate : TaskBoardModel
                 column: column,
                 newOrder: order,
                 updatedById: updatedById,
-                cancellationToken: cancellationToken,
                 dateTimeService: dateTimeService
             );
             if (localResult.IsFailure && localResult.ErrorDetails.Any())
@@ -316,8 +315,8 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         TaskBoardColumnModel column,
         int newOrder,
         Guid updatedById,
-        IDateTimeService dateTimeService,
-        CancellationToken cancellationToken)
+        IDateTimeService dateTimeService
+        )
     {
         if (newOrder == column.Order)
         {
@@ -414,4 +413,6 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         Timestamps.Touch(dateTimeService);
         AuthorInfo.Update(updatedById);
     }
+
+    public void Delete() {}
 }
