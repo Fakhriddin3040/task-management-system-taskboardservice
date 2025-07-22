@@ -5,6 +5,7 @@ using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Models.Fields;
+using TaskManagementSystem.SharedLib.Structs;
 using TaskManagementSystem.SharedLib.ValueObjects;
 using TaskManagementSystem.TaskBoardService.Core.Extensions;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
@@ -21,13 +22,13 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
     public static async Task<Result<TaskBoardAggregate>> CreateAsync(
         string name,
-        string? description,
+        string description,
         Guid organizationId,
         Guid createdById,
         CancellationToken cancellationToken,
         IDateTimeService dateTimeService,
         IValidBoardNamePolicy namePolicy,
-        IUniqueTaskBoardNamePolicy uniqueNamePolicy
+        IUniqueBoardNamePolicy uniqueNamePolicy
         )
     {
         var errors = new List<AppExceptionDetail>();
@@ -70,6 +71,62 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         };
 
         return Result<TaskBoardAggregate>.Success(taskBoard);
+    }
+
+    public async Task<Result<Unit>> UpdateAsync(
+        string name,
+        string description,
+        Guid updateById,
+        IDateTimeService dateTimeService,
+        IValidBoardNamePolicy namePolicy,
+        IUniqueBoardNamePolicy uniqueNamePolicy,
+        CancellationToken cancellationToken)
+    {
+        var errors = new List<AppExceptionDetail>();
+
+        if (!string.IsNullOrEmpty(name) && Name != name)
+        {
+            var isNameValid = namePolicy.IsValid(name);
+
+            if (!isNameValid)
+            {
+                errors.Add(
+                    new(
+                        StatusCode: AppExceptionStatusCode.InvalidFormat,
+                        Field: TaskBoardField.Name
+                    )
+                );
+            }
+            if (isNameValid && !await uniqueNamePolicy.IsUnique(name, cancellationToken))
+            {
+                isNameValid = false;
+                errors.Add(
+                    new(
+                        StatusCode: AppExceptionStatusCode.UniqueConstraints,
+                        Field: TaskBoardField.Name
+                    )
+                );
+            }
+            if (isNameValid)
+            {
+                Name = name;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(description))
+        {
+            Description = description;
+        }
+
+        if (errors.Any())
+        {
+            return Result<Unit>.Failure(errors);
+        }
+
+        Timestamps.Touch(dateTimeService);
+        AuthorInfo.Update(updateById);
+
+        return Result<Unit>.Success(Unit.Value);
     }
 
     public async Task<Result<TaskBoardColumnModel>> AddColumnAsync(

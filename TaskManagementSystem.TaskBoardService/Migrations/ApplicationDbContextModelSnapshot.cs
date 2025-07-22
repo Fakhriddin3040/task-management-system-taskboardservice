@@ -8,7 +8,7 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 
 #nullable disable
 
-namespace TaskManagementSystem.DashboardService.Migrations
+namespace TaskManagementSystem.TaskBoardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot

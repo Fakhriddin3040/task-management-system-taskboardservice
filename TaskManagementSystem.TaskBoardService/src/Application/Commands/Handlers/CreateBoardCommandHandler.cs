@@ -18,14 +18,14 @@ public class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, Res
     private readonly ExecutionContext _executionContext;
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IDateTimeService _dateTimeService;
-    private readonly IUniqueTaskBoardNamePolicy _uniqueNamePolicy;
+    private readonly IUniqueBoardNamePolicy _uniqueNamePolicy;
     private readonly IValidBoardNamePolicy _namePolicy;
     private readonly ILogger<CreateBoardCommandHandler> _logger;
 
     public CreateBoardCommandHandler(
         IExecutionContextProvider executionContextProvider,
         IDateTimeService dateTimeService,
-        IUniqueTaskBoardNamePolicy uniqueNamePolicy,
+        IUniqueBoardNamePolicy uniqueNamePolicy,
         ITaskBoardRepository taskBoardRepository,
         IValidBoardNamePolicy namePolicy,
         ILogger<CreateBoardCommandHandler> logger)

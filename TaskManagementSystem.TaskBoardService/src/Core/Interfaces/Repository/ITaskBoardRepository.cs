@@ -12,7 +12,7 @@ public interface ITaskBoardRepository
     Task<TaskBoardAggregate?> GetByColumnIdAsync(Guid columnId, CancellationToken cancellationToken);
     Task CreateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken);
     Task<IEnumerable<TaskBoardColumnModel>> GetColumnsAsync(Guid taskBoardId, CancellationToken cancellationToken);
-    void UpdateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken);
+    void Update(TaskBoardAggregate taskBoard);
     Task DeleteAsync(Guid taskBoardId, CancellationToken cancellationToken);
     Task<bool> ExistsAsync(Expression<Func<TaskBoardAggregate, bool>> predicate, CancellationToken cancellationToken);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
