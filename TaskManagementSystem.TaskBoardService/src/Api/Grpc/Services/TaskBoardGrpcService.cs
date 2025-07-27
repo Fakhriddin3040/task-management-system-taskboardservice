@@ -68,7 +68,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
 
     public override async Task<Empty> UpdateColumn(TaskBoardColumnUpdateProtoRequest request, ServerCallContext context)
     {
-        var command = new UpdateColumnCommand(
+        var command = new RenameColumnCommand(
             columnId: Guid.Parse(request.Id),
             name: request.Name,
             order: request.Order

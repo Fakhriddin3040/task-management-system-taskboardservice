@@ -8,7 +8,7 @@ public class TaskBoardColumnModel
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
-    public int Order { get; set; }
+    public long Order { get; set; }
     public Guid BoardId { get; set; }
     public AuthorInfo AuthorInfo { get; set; }
     public Timestamps Timestamps { get; set; }

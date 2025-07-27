@@ -8,7 +8,7 @@ namespace TaskManagementSystem.TaskBoardService.Application.DTO;
 public sealed record ColumnListDto(
     Guid Id,
     string Name,
-    int Order,
+    long Order,
     AuthorInfo AuthorInfo,
     Timestamps Timestamps)
 {

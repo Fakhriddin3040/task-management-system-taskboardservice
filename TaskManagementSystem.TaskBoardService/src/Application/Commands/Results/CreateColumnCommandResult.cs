@@ -1,8 +1,8 @@
 namespace TaskManagementSystem.TaskBoardService.Application.Commands.Results;
 
 
-public class CreateColumnCommandResult(Guid id, int order)
+public class CreateColumnCommandResult(Guid id, long order)
 {
     public Guid Id { get; set; } = id;
-    public int Order { get; set; } = order;
+    public long Order { get; set; } = order;
 }

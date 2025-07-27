@@ -2,8 +2,10 @@ using MediatR;
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
+using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Providers.Interfaces;
+using TaskManagementSystem.TaskBoardService.Core.Aggregates;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
@@ -12,13 +14,13 @@ using Unit = TaskManagementSystem.SharedLib.Structs.Unit;
 namespace TaskManagementSystem.TaskBoardService.Application.Commands.Handlers;
 
 
-public class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand, Result<Unit>>
+public class UpdateColumnCommandHandler : IRequestHandler<RenameColumnCommand, Result<Unit>>
 {
     private readonly ITaskBoardRepository _boardRepository;
     private readonly IDateTimeService _dateTimeService;
     private readonly IValidColumnNamePolicy _namePolicy;
     private readonly IUniqueColumnNamePolicy _uniqueNamePolicy;
-    private readonly ExecutionContext _executionContext;
+    private readonly ExecutionContext _context;
 
     public UpdateColumnCommandHandler(
         ITaskBoardRepository boardRepository,
@@ -31,34 +33,37 @@ public class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand, R
         _dateTimeService = dateTimeService;
         _namePolicy = namePolicy;
         _uniqueNamePolicy = uniqueNamePolicy;
-        _executionContext = contextProvider.GetContext();
+        _context = contextProvider.GetContext();
     }
 
-    public async Task<Result<Unit>> Handle(UpdateColumnCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Unit>> Handle(RenameColumnCommand request, CancellationToken cancellationToken)
     {
         var board = await _boardRepository.GetByColumnIdAsync(request.ColumnId, cancellationToken);
-
         if (board == null)
             throw new AppException(
                 message: AppExceptionErrorMessages.NotFound,
                 statusCode: AppExceptionStatusCode.NotFound
             );
 
-        var result = await board.UpdateColumnAsync(
-            columnId: request.ColumnId,
-            updatedById: _executionContext.User.Id,
-            name: request.Name,
-            order: request.Order,
-            cancellationToken: cancellationToken,
-            namePolicy: _namePolicy,
-            uniqueNamePolicy: _uniqueNamePolicy,
-            dateTimeService: _dateTimeService
-        );
-
-        if (result.IsFailure)
+        if (!string.IsNullOrWhiteSpace(request.Name))
         {
-            return Result<Unit>.Failure(result.ErrorDetails);
+            var localResult = await board.RenameColumnAsync(
+                columnId: request.ColumnId,
+                newName: request.Name,
+                cancellationToken: cancellationToken,
+                dateTimeService: _dateTimeService,
+                updatedById: _context.User.Id,
+                namePolicy: _namePolicy,
+                uniqueNamePolicy: _uniqueNamePolicy
+            );
+
+            if (localResult.IsFailure)
+            {
+                errors = errors.Merge(localResult);
+            }
         }
+
+        MoveColumns()
 
         _boardRepository.Update(board);
 

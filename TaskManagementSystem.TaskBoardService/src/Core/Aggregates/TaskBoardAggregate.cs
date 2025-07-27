@@ -1,13 +1,13 @@
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
 using TaskManagementSystem.AuthService.Core.ValueObjects;
+using TaskManagementSystem.SharedLib.Algorithms.NumeralRank;
+using TaskManagementSystem.SharedLib.Algorithms.NumeralRank.Interfaces;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
-using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Models.Fields;
 using TaskManagementSystem.SharedLib.Structs;
 using TaskManagementSystem.SharedLib.ValueObjects;
-using TaskManagementSystem.TaskBoardService.Core.Extensions;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Models;
 
@@ -174,7 +174,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         var timestamps = Timestamps.FromDateTimeService(dateTimeService);
         var authorInfo = new AuthorInfo(createdById, createdById);
 
-        var latestColumnsOrder = this.GetNextColumnOrder();
+        var latestColumnsOrder = 100;
 
         var column = new TaskBoardColumnModel
         {
@@ -191,73 +191,8 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         return Result<TaskBoardColumnModel>.Success(column);
     }
 
-    public async Task<Result<TaskBoardColumnModel>> UpdateColumnAsync(
+    public async Task<Result<TaskBoardColumnModel>> RenameColumnAsync(
         Guid columnId,
-        Guid updatedById,
-        string name,
-        CancellationToken cancellationToken,
-        IValidColumnNamePolicy namePolicy,
-        IUniqueColumnNamePolicy uniqueNamePolicy,
-        IDateTimeService dateTimeService,
-        int order = 0
-        )
-    {
-        var column = Columns.FirstOrDefault(c => c.Id == columnId);
-
-        if (column == null)
-        {
-            throw new AppException(
-                statusCode: AppExceptionStatusCode.NotFound,
-                message: AppExceptionErrorMessages.NotFound
-            );
-        }
-        var result = Result<TaskBoardColumnModel>.Empty();
-
-        if (!string.IsNullOrEmpty(name))
-        {
-            var localResult = await RenameColumnAsync(
-                column: column,
-                newName: name,
-                updatedById: updatedById,
-                cancellationToken: cancellationToken,
-                namePolicy: namePolicy,
-                uniqueNamePolicy: uniqueNamePolicy,
-                dateTimeService: dateTimeService
-            );
-
-            if (localResult.IsFailure && localResult.ErrorDetails.Any())
-            {
-                result = localResult;
-            }
-        }
-
-        if (order != 0)
-        {
-            var localResult = ReorderColumn(
-                column: column,
-                newOrder: order,
-                updatedById: updatedById,
-                dateTimeService: dateTimeService
-            );
-            if (localResult.IsFailure && localResult.ErrorDetails.Any())
-            {
-                result = result.Merge(localResult);
-            }
-        }
-
-        if (result.ErrorDetails.Any())
-        {
-            return result;
-        }
-
-        AuthorInfo.UpdatedById = updatedById;
-        Timestamps.Touch(dateTimeService);
-
-        return Result<TaskBoardColumnModel>.Success(column);
-    }
-
-    private async Task<Result<TaskBoardColumnModel>> RenameColumnAsync(
-        TaskBoardColumnModel column,
         string newName,
         Guid updatedById,
         CancellationToken cancellationToken,
@@ -266,6 +201,8 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         IDateTimeService dateTimeService
         )
     {
+        var column = GetColumnById(columnId);
+
         var errors = new List<AppExceptionDetail>();
 
         if (newName == column.Name)
@@ -311,103 +248,46 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         return Result<TaskBoardColumnModel>.Success(column);
     }
 
-    private Result<TaskBoardColumnModel> ReorderColumn(
-        TaskBoardColumnModel column,
-        int newOrder,
+    private TaskBoardColumnModel GetColumnById(Guid columnId)
+    {
+        return Columns.FirstOrDefault(c => c.Id == columnId)
+            ?? throw new AppException(
+                statusCode: AppExceptionStatusCode.NotFound,
+                message: AppExceptionErrorMessages.NotFound
+            );
+    }
+
+    public NumeralRankResult MoveColumn(
+        Guid columnId,
         Guid updatedById,
-        IDateTimeService dateTimeService
+        NumeralRankContext rankContext,
+        IDateTimeService dateTimeService,
+        INumeralRankStrategySelector rankStrategySelector
         )
     {
-        if (newOrder == column.Order)
+        var strategy = rankStrategySelector.GetStrategy(rankContext);
+        var numeralRankResult = strategy.GenerateRank(rankContext);
+
+        if (!numeralRankResult.IsValid)
         {
-            return Result<TaskBoardColumnModel>.Success(column);
+            return numeralRankResult;
         }
 
-        var errors = new List<AppExceptionDetail>();
+        var column = GetColumnById(columnId);
 
-        if (newOrder < 0)
-        {
-            return Result<TaskBoardColumnModel>.Failure(errors);
-        }
-
-        if (newOrder > Columns.Count)
-        {
-            errors.Add(
-                new(
-                    AppExceptionStatusCode.InvalidValue,
-                    TaskColumnField.Order
-                )
-            );
-        }
-
-        if (errors.Any())
-        {
-            return Result<TaskBoardColumnModel>.Failure(errors);
-        }
-
-        if (newOrder > column.Order)
-        {
-            ModifyColumns(
-                Columns.Where(c => c.Order > column.Order && c.Order <= newOrder)
-                    .ToList(), dateTimeService: dateTimeService, updatedById: updatedById, col => col.Order++
-            );
-        }
-        else
-        {
-            ModifyColumns(
-                columns: Columns.Where(c => c.Order < column.Order && c.Order >= newOrder)
-                    .ToList(),
-                dateTimeService: dateTimeService,
-                updatedById: updatedById,
-                col => col.Order--
-            );
-        }
-
-        column.Order = newOrder;
+        column.Order = numeralRankResult.Rank;
         column.Timestamps.Touch(dateTimeService);
         column.AuthorInfo.Update(updatedById);
 
-        return Result<TaskBoardColumnModel>.Success(column);
-    }
+        Timestamps.Touch(dateTimeService);
+        AuthorInfo.Update(updatedById);
 
-    private void ModifyColumns(
-        List<TaskBoardColumnModel> columns,
-        IDateTimeService dateTimeService,
-        Guid updatedById,
-        Action<TaskBoardColumnModel> modifyAction
-    )
-    {
-        columns.ForEach(c =>
-        {
-            modifyAction(c);
-            c.Timestamps.Touch(dateTimeService);
-            c.AuthorInfo.Update(updatedById);
-        });
+        return numeralRankResult;
     }
 
     public void RemoveColumn(Guid columnId, Guid updatedById, IDateTimeService dateTimeService)
     {
-        var column = Columns.FirstOrDefault(c => c.Id == columnId);
-
-        if (column == null)
-        {
-            throw new AppException(
-                statusCode: AppExceptionStatusCode.NotFound,
-                message: AppExceptionErrorMessages.NotFound
-            );
-        }
-
-        var columnsToMove = Columns.Where(c => c.Order > column.Order).ToList();
-
-        if (columnsToMove.Any())
-        {
-            ModifyColumns(
-                columns: columnsToMove,
-                dateTimeService: dateTimeService,
-                updatedById: updatedById,
-                col => col.Order-- // Decrease order of columns after the removed one
-            );
-        }
+        var column = GetColumnById(columnId);
 
         Columns.Remove(column);
         Timestamps.Touch(dateTimeService);
