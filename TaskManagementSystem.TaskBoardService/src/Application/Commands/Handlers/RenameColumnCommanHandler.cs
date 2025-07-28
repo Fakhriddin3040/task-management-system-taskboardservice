@@ -2,10 +2,8 @@ using MediatR;
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
-using TaskManagementSystem.SharedLib.Extensions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Providers.Interfaces;
-using TaskManagementSystem.TaskBoardService.Core.Aggregates;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
@@ -39,31 +37,29 @@ public class UpdateColumnCommandHandler : IRequestHandler<RenameColumnCommand, R
     public async Task<Result<Unit>> Handle(RenameColumnCommand request, CancellationToken cancellationToken)
     {
         var board = await _boardRepository.GetByColumnIdAsync(request.ColumnId, cancellationToken);
+
         if (board == null)
             throw new AppException(
                 message: AppExceptionErrorMessages.NotFound,
                 statusCode: AppExceptionStatusCode.NotFound
             );
 
-        if (!string.IsNullOrWhiteSpace(request.Name))
+        if (string.IsNullOrEmpty(board.Name))
+            return Result<Unit>.Success(Unit.Value);
+
+        var result = await board.RenameColumnAsync(
+            columnId: request.ColumnId,
+            newName: request.Name,
+            updatedById: _context.User.Id,
+            dateTimeService: _dateTimeService,
+            namePolicy: _namePolicy,
+            uniqueNamePolicy: _uniqueNamePolicy,
+            cancellationToken: cancellationToken);
+
+        if (result.IsFailure)
         {
-            var localResult = await board.RenameColumnAsync(
-                columnId: request.ColumnId,
-                newName: request.Name,
-                cancellationToken: cancellationToken,
-                dateTimeService: _dateTimeService,
-                updatedById: _context.User.Id,
-                namePolicy: _namePolicy,
-                uniqueNamePolicy: _uniqueNamePolicy
-            );
-
-            if (localResult.IsFailure)
-            {
-                errors = errors.Merge(localResult);
-            }
+            return Result<Unit>.Failure(result.ErrorDetails);
         }
-
-        MoveColumns()
 
         _boardRepository.Update(board);
 
