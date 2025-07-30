@@ -1,7 +1,7 @@
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
 using TaskManagementSystem.AuthService.Core.ValueObjects;
-using TaskManagementSystem.SharedLib.Algorithms.NumeralRank;
-using TaskManagementSystem.SharedLib.Algorithms.NumeralRank.Interfaces;
+using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank;
+using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Interfaces;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Handlers;
@@ -265,6 +265,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         INumeralRankStrategySelector rankStrategySelector
         )
     {
+        ValidateBeforeRanking(rankContext);
         var strategy = rankStrategySelector.GetStrategy(rankContext);
         var numeralRankResult = strategy.GenerateRank(rankContext);
 
@@ -283,6 +284,16 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         AuthorInfo.Update(updatedById);
 
         return numeralRankResult;
+    }
+
+    private void ValidateBeforeRanking(NumeralRankContext rankContext)
+    {
+        var ordered = Columns.OrderBy(c => c.Order).ToList();
+
+        var prev = ordered.FirstOrDefault(c => c.Order == rankContext.PreviousRank);
+        var next = ordered.FirstOrDefault(c => c.Order == rankContext.NextRank);
+
+
     }
 
     public void RemoveColumn(Guid columnId, Guid updatedById, IDateTimeService dateTimeService)

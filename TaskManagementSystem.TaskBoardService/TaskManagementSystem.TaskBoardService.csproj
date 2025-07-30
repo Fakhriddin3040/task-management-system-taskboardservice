@@ -25,4 +25,8 @@
     <ProjectReference Include="..\TaskManagementSystem.GrpcLib\TaskManagementSystem.GrpcLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="src\Core\Algorithms\" />
+  </ItemGroup>
+
 </Project>

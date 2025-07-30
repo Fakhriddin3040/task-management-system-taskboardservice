@@ -5,7 +5,7 @@ using Unit = TaskManagementSystem.SharedLib.Structs.Unit;
 namespace TaskManagementSystem.TaskBoardService.Application.Commands;
 
 
-public readonly struct MoveColumnCommand(Guid ColumnId, Guid PreviousId, Guid nextId) : IRequest<Result<Unit>>
+public readonly struct MoveColumnCommand(Guid ColumnId, Guid PreviousId, Guid nextId) : IRequest
 {
     public Guid ColumnId { get; } = ColumnId;
     public Guid PreviousId { get; } = PreviousId;
