@@ -24,7 +24,7 @@ public class TaskBoardRepository : ITaskBoardRepository
             .Where(b => b.Id == taskBoardId)
             .SelectMany(b => b.Columns)
             .AsNoTracking()
-            .ToListAsync(cancellationToken);
+            .ToArrayAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<TaskBoardAggregate>> GetByIdsAsync(IEnumerable<Guid> ids, bool detailed, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ public class TaskBoardRepository : ITaskBoardRepository
         if (detailed)
             query.Include(b => b.Columns);
 
-        return await query.ToListAsync(cancellationToken);
+        return await query.ToArrayAsync(cancellationToken);
     }
 
     public async Task<TaskBoardAggregate?> GetByColumnIdAsync(Guid columnId, CancellationToken cancellationToken)
@@ -45,6 +45,15 @@ public class TaskBoardRepository : ITaskBoardRepository
             .Where(b => b.Columns.Any(c => c.Id == columnId))
             .Include(b => b.Columns)
             .FirstOrDefaultAsync(cancellationToken);
+    }
+    public async Task<IEnumerable<TaskBoardColumnModel>> FilterColumnsAsync(Guid taskBoardId, Expression<Func<TaskBoardColumnModel, bool>> predicate, CancellationToken cancellationToken)
+    {
+        return await _dbContext.TaskBoards
+            .Where(b => b.Id == taskBoardId)
+            .SelectMany(b => b.Columns)
+            .Where(predicate)
+            .AsNoTracking()
+            .ToArrayAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<TaskBoardAggregate?> GetByIdAsync(Guid taskBoardId, CancellationToken cancellationToken)
@@ -78,6 +87,11 @@ public class TaskBoardRepository : ITaskBoardRepository
     {
         return await _dbContext.TaskBoards
             .AnyAsync(predicate, cancellationToken);
+    }
+
+    public async Task<bool> HasAnyColumnAsync(Guid taskBoardId, CancellationToken cancellationToken)
+    {
+        return await _dbContext.TaskBoards.AnyAsync(b => b.Columns.Any(c => c.BoardId == taskBoardId), cancellationToken);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)

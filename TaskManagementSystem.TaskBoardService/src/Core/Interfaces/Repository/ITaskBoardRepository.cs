@@ -10,10 +10,15 @@ public interface ITaskBoardRepository
     Task<IEnumerable<TaskBoardAggregate>> GetByIdsAsync(IEnumerable<Guid> ids, bool detailed, CancellationToken cancellationToken);
     Task<TaskBoardAggregate?> GetByIdAsync(Guid taskBoardId, CancellationToken cancellationToken);
     Task<TaskBoardAggregate?> GetByColumnIdAsync(Guid columnId, CancellationToken cancellationToken);
+    Task<IEnumerable<TaskBoardColumnModel>> FilterColumnsAsync(
+        Guid taskBoardId,
+        Expression<Func<TaskBoardColumnModel, bool>> predicate,
+        CancellationToken cancellationToken);
     Task CreateAsync(TaskBoardAggregate taskBoard, CancellationToken cancellationToken);
     Task<IEnumerable<TaskBoardColumnModel>> GetColumnsAsync(Guid taskBoardId, CancellationToken cancellationToken);
     void Update(TaskBoardAggregate taskBoard);
     Task DeleteAsync(Guid taskBoardId, CancellationToken cancellationToken);
     Task<bool> ExistsAsync(Expression<Func<TaskBoardAggregate, bool>> predicate, CancellationToken cancellationToken);
+    Task<bool> HasAnyColumnAsync(Guid taskBoardId, CancellationToken cancellationToken);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

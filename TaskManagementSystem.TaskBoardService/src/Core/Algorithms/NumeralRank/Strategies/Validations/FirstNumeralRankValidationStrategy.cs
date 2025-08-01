@@ -1,17 +1,25 @@
 using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Interfaces;
+using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 
 namespace TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Strategies.Validations;
 
 
 public class FirstNumeralRankValidationStrategy : INumeralRankValidationStrategy
 {
+    private readonly ITaskBoardRepository _boardRepository;
 
-    public Task<bool> ValidateAsync(NumeralRankContext numeralRankContext)
+    public FirstNumeralRankValidationStrategy(ITaskBoardRepository boardRepository)
     {
-        throw new NotImplementedException();
+        _boardRepository = boardRepository;
     }
-    public bool CanHandle(NumeralRankContext numeralRankContext)
+
+    public async Task<bool> ValidateAsync(Guid boardId, NumeralRankContext context, CancellationToken cancellationToken)
     {
-        return numeralRankContext.IsFirstRank;
+        return await _boardRepository.HasAnyColumnAsync(boardId, cancellationToken);
+    }
+
+    public bool CanHandle(NumeralRankContext rankContext)
+    {
+        return rankContext.IsFirstRank;
     }
 }

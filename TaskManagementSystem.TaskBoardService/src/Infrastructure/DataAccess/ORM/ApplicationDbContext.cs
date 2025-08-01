@@ -81,6 +81,11 @@ public class ApplicationDbContext : DbContext
             e.BoardId
         }).IsUnique();
 
+        builder.HasIndex(e => new {
+            e.Order,
+            e.BoardId
+        }).IsUnique();
+
         builder.Property(e => e.Name)
             .HasMaxLength(100);
 
