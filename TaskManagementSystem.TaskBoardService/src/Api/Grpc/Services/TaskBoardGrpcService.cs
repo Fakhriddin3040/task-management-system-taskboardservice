@@ -45,10 +45,10 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
     public override async Task<TaskBoardColumnCreateProtoResponse> CreateColumn(TaskBoardColumnCreateProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation(
-            "Creating task board column with name: {Name} for board ID: {BoardId}", request.Name, request.TaskBoardId
+            "Creating task board column with name: {Name} for board ID: {BoardId}", request.Name, request.BoardId
             );
         var command = new CreateColumnCommand(
-            boardId: Guid.Parse(request.TaskBoardId),
+            boardId: request.BoardId.ToGuidOrDefault(),
             name: request.Name
         );
 
@@ -66,10 +66,10 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         };
     }
 
-    public override async Task<Empty> UpdateColumn(TaskBoardColumnUpdateProtoRequest request, ServerCallContext context)
+    public override async Task<Empty> RenameColumn(TaskBoardRenameColumnProtoRequest request, ServerCallContext context)
     {
         var command = new RenameColumnCommand(
-            columnId: Guid.Parse(request.Id),
+            columnId: request.Id.ToGuidOrDefault(),
             name: request.Name,
             order: request.Order
         );
@@ -103,7 +103,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
 
         var response = new TaskBoardListProtoResponse();
 
-        response.TaskBoards.AddRange(
+        response.Boards.AddRange(
             [
                 ..result.Value.Boards.Select(b => new TaskBoardProto {
                     Id = b.Id.ToString(),
@@ -123,7 +123,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
     public override async Task<TaskBoardDetailedProto> GetById(TaskBoardGetProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation("Handling 'Get board by id'. Board id: {}", request.Id);
-        var query = new GetBoardByIdQuery(Id: Guid.Parse(request.Id));
+        var query = new GetBoardByIdQuery(Id: request.Id.ToGuidOrDefault());
 
         var result = await _mediator.Send(query);
 
@@ -158,12 +158,13 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         return response;
     }
 
-    public override async Task<TaskBoardGetAllColumnsResponse> GetAllColumns(TaskBoardGetAllColumnsRequest request, ServerCallContext context)
+    public override async Task<TaskBoardGetAllColumnsProtoResponse> GetAllColumns(
+        TaskBoardGetAllColumnsProtoRequest request, ServerCallContext context)
     {
         _logger.LogInformation("Handling {} request with board id: {}", nameof(GetAllColumns), request.BoardId);
 
         var query = new GetAllColumnsQuery(
-            BoardId: Guid.Parse(request.BoardId)
+            BoardId: request.BoardId.ToGuidOrDefault()
         );
 
         var result = await _mediator.Send(query);
@@ -174,7 +175,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
             throw result.CreateExceptionFrom();
         }
 
-        var response = new TaskBoardGetAllColumnsResponse();
+        var response = new TaskBoardGetAllColumnsProtoResponse();
 
         response.Columns.AddRange(
             [
@@ -197,7 +198,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger.LogInformation("Updating task board with ID: {TaskBoardId}. Provided data: {}", request.Id, request.ToString());
 
         var command = new UpdateBoardCommand(
-            Id: Guid.Parse(request.Id),
+            Id: request.Id.ToGuidOrDefault(),
             Name: request.Name,
             Description: request.Description
         );
@@ -220,7 +221,7 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger.LogInformation("Deleting task board with ID: {}", request.Id);
 
         var command = new DeleteBoardCommand(
-            Id: Guid.Parse(request.Id)
+            Id: request.Id.ToGuidOrDefault()
         );
 
         await _mediator.Send(command);
@@ -233,12 +234,25 @@ public class TaskBoardGrpcService : GrpcLib.TaskBoardService.Services.TaskBoardS
         _logger.LogInformation("Deleting task board column with ID: {}", request.Id);
 
         var command = new DeleteColumnCommand(
-            ColumnId: Guid.Parse(request.Id)
+            ColumnId: request.Id.ToGuidOrDefault()
         );
 
         await _mediator.Send(command);
 
         _logger.LogInformation("Deleted task board column with ID: {ColumnId}", request.Id);
+
+        return new Empty();
+    }
+
+    public async override Task<Empty> MoveColumn(TaskBoardMoveColumnProtoRequest request, ServerCallContext context)
+    {
+        var command = new MoveColumnCommand(
+            columnId: request.ColumnId.ToGuidOrDefault(),
+            previousId: request.PreviousId.ToGuidOrDefault(),
+            nextId: request.NextId.ToGuidOrDefault()
+        );
+
+        await _mediator.Send(command);
 
         return new Empty();
     }

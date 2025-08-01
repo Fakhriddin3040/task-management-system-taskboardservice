@@ -1,7 +1,7 @@
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
 using TaskManagementSystem.AuthService.Core.ValueObjects;
 using TaskManagementSystem.SharedLib.Algorithms.NumeralRank;
-using TaskManagementSystem.SharedLib.Algorithms.NumeralRank.Interfaces;
+using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Interfaces;
 using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Handlers;
@@ -10,6 +10,8 @@ using TaskManagementSystem.SharedLib.Structs;
 using TaskManagementSystem.SharedLib.ValueObjects;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Models;
+using NumeralRankContext = TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.NumeralRankContext;
+using NumeralRankResult = TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.NumeralRankResult;
 
 namespace TaskManagementSystem.TaskBoardService.Core.Aggregates;
 
@@ -129,10 +131,11 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         return Result<Unit>.Success(Unit.Value);
     }
 
-    public async Task<Result<TaskBoardColumnModel>> AddColumnAsync(
+    public async Task<Result<NumeralRankResult>> AddColumnAsync(
         string name,
         Guid createdById,
         CancellationToken cancellationToken,
+        INumeralRankStrategySelector numeralRankStrategySelector,
         IDateTimeService dateTimeService,
         IValidColumnNamePolicy namePolicy,
         IUniqueColumnNamePolicy uniqueNamePolicy
@@ -168,13 +171,19 @@ public sealed class TaskBoardAggregate : TaskBoardModel
 
         if (errors.Any())
         {
-            return Result<TaskBoardColumnModel>.Failure(errors);
+            return Result<NumeralRankResult>.Failure(errors);
         }
 
         var timestamps = Timestamps.FromDateTimeService(dateTimeService);
         var authorInfo = new AuthorInfo(createdById, createdById);
 
-        var latestColumnsOrder = 100;
+        var latestColumnsOrder = Columns.Any() ? Columns.Max(c => c.Order) : NumeralRankOptions.Empty;
+
+        var rankContext = new NumeralRankContext(
+            previousRank: latestColumnsOrder,
+            nextRank: NumeralRankOptions.Empty);
+
+        var newNumeralRankResult = numeralRankStrategySelector.GetStrategy(rankContext).GenerateRank(rankContext);
 
         var column = new TaskBoardColumnModel
         {
@@ -183,12 +192,12 @@ public sealed class TaskBoardAggregate : TaskBoardModel
             Name = name,
             AuthorInfo = authorInfo,
             Timestamps = timestamps,
-            Order = latestColumnsOrder
+            Order = newNumeralRankResult.Rank
         };
 
         Columns.Add(column);
 
-        return Result<TaskBoardColumnModel>.Success(column);
+        return Result<NumeralRankResult>.Success(newNumeralRankResult);
     }
 
     public async Task<Result<TaskBoardColumnModel>> RenameColumnAsync(
@@ -265,6 +274,7 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         INumeralRankStrategySelector rankStrategySelector
         )
     {
+        ValidateBeforeRanking(rankContext);
         var strategy = rankStrategySelector.GetStrategy(rankContext);
         var numeralRankResult = strategy.GenerateRank(rankContext);
 
@@ -283,6 +293,16 @@ public sealed class TaskBoardAggregate : TaskBoardModel
         AuthorInfo.Update(updatedById);
 
         return numeralRankResult;
+    }
+
+    private void ValidateBeforeRanking(NumeralRankContext rankContext)
+    {
+        var ordered = Columns.OrderBy(c => c.Order).ToList();
+
+        var prev = ordered.FirstOrDefault(c => c.Order == rankContext.PreviousRank);
+        var next = ordered.FirstOrDefault(c => c.Order == rankContext.NextRank);
+
+
     }
 
     public void RemoveColumn(Guid columnId, Guid updatedById, IDateTimeService dateTimeService)

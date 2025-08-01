@@ -1,11 +1,11 @@
 using MediatR;
 using TaskManagementSystem.SharedLib.Abstractions.Interfaces;
-using TaskManagementSystem.SharedLib.Enums.Exceptions;
 using TaskManagementSystem.SharedLib.Exceptions;
 using TaskManagementSystem.SharedLib.Handlers;
 using TaskManagementSystem.SharedLib.Providers.Interfaces;
-using TaskManagementSystem.TaskBoardService.Application.Commands;
 using TaskManagementSystem.TaskBoardService.Application.Commands.Results;
+using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Interfaces;
+using TaskManagementSystem.TaskBoardService.Core.Algorithms.NumeralRank.Strategies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Policies;
 using TaskManagementSystem.TaskBoardService.Core.Interfaces.Repository;
 using ExecutionContext = TaskManagementSystem.SharedLib.DTO.ExecutionContext;
@@ -20,6 +20,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
     private readonly IUniqueColumnNamePolicy _uniqueColumnNamePolicy;
     private readonly IDateTimeService _dateTimeService;
     private readonly ExecutionContext _context;
+    private readonly INumeralRankStrategySelector _rankStrategySelector;
 
     public CreateColumnCommandHandler(
         ITaskBoardRepository boardRepository,
@@ -34,6 +35,12 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
         _validColumnNamePolicy = validColumnNamePolicy;
         _uniqueColumnNamePolicy = uniqueColumnNamePolicy;
         _dateTimeService = dateTimeService;
+        _rankStrategySelector = new NumeralRankStrategySelector(
+            [
+                new EndNumeralRankStrategy(),
+                new FirstNumeralRankStrategy()
+            ]
+        );
     }
 
     public async Task<Result<CreateColumnCommandResult>> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
@@ -49,6 +56,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
             name: request.Name,
             createdById: _context.User.Id,
             cancellationToken: cancellationToken,
+            numeralRankStrategySelector: _rankStrategySelector,
             dateTimeService: _dateTimeService,
             namePolicy: _validColumnNamePolicy,
             uniqueNamePolicy: _uniqueColumnNamePolicy
@@ -59,13 +67,24 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, R
             return Result<CreateColumnCommandResult>.Failure(result.ErrorDetails);
         }
 
+        if (result.Value.NeedToReorder)
+        {
+            throw new NotImplementedException("Not implemented yet!");
+        }
+        if (!result.Value.IsValid)
+        {
+            throw new AppUnexpectedException();
+        }
+
         _boardRepository.Update(board);
         await _boardRepository.SaveChangesAsync(cancellationToken);
 
+        var column = board.Columns.First(c => c.Order == result.Value.Rank);
+
         return Result<CreateColumnCommandResult>.Success(
             new(
-                id: result.Value.Id,
-                order: result.Value.Order
+                id: column.Id,
+                order: column.Order
             )
         );
     }
