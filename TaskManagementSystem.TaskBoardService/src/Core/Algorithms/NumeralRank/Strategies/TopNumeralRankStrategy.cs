@@ -10,10 +10,9 @@ public class TopNumeralRankStrategy : INumeralRankStrategy
     {
         var needReorder = context.NextRank / 2 < NumeralRankOptions.MinGap;
 
-        return new(
-            rank: needReorder
-        ? NumeralRankOptions.NeedReordering
-        : context.NextRank / 2);
+        return needReorder
+            ? NumeralRankResult.ForReorder()
+            : new(context.NextRank / 2);
     }
 
     public bool CanHandle(NumeralRankContext context)

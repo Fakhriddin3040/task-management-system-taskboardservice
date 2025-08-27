@@ -11,11 +11,10 @@ public class EndNumeralRankStrategy : INumeralRankStrategy
     {
         var needReorder = NumeralRankOptions.MaxRank - context.PreviousRank <= NumeralRankOptions.MinGap;
 
-        return new(
-            rank: needReorder
-                ? NumeralRankOptions.NeedReordering
-                : context.PreviousRank + NumeralRankOptions.DefaultStep
-        );
+        return needReorder
+            ? NumeralRankResult.ForReorder()
+            : new(
+                context.PreviousRank + NumeralRankOptions.DefaultStep);
     }
 
     public bool CanHandle(NumeralRankContext context)

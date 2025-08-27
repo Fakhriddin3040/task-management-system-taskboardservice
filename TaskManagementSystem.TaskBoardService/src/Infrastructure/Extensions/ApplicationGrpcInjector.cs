@@ -13,7 +13,6 @@ public static class ApplicationGrpcInjector
 {
     public static IServiceCollection AddApplicationGrpc(this IServiceCollection services)
     {
-        services.AddGrpcLib();
         services.AddGrpc(op =>
             op.Interceptors.Add<ExecutionContextInitializerGrpcServerInterceptor>()
         );
