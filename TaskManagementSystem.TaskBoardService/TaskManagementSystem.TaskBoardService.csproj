@@ -22,7 +22,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\TaskManagementSystem.SharedLib\TaskManagementSystem.SharedLib.csproj" />
     <ProjectReference Include="..\TaskManagementSystem.GrpcLib\TaskManagementSystem.GrpcLib.csproj" />

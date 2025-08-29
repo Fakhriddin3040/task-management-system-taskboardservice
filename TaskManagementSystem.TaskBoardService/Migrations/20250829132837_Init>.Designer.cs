@@ -12,8 +12,8 @@ using TaskManagementSystem.TaskBoardService.Infrastructure.DataAccess.ORM;
 namespace TaskManagementSystem.TaskBoardService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250731190505_Update...")]
-    partial class Update
+    [Migration("20250829132837_Init>")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

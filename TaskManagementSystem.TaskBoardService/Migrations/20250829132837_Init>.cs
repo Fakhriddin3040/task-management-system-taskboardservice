@@ -35,7 +35,7 @@ namespace TaskManagementSystem.TaskBoardService.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    order = table.Column<int>(type: "integer", nullable: false),
+                    order = table.Column<long>(type: "bigint", nullable: false),
                     board_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_by_id = table.Column<Guid>(type: "uuid", nullable: false),
                     updated_by_id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -62,6 +62,12 @@ namespace TaskManagementSystem.TaskBoardService.Migrations
                 name: "ix_task_board_columns_name_board_id",
                 table: "task_board_columns",
                 columns: new[] { "name", "board_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_task_board_columns_order_board_id",
+                table: "task_board_columns",
+                columns: new[] { "order", "board_id" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
