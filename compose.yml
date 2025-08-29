@@ -1,0 +1,23 @@
+services:
+  tms-task:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: tms-taskboardservice:latest
+    env_file:
+      - TaskManagementSystem.AuthService/.env
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      ASPNETCORE_Kestrel__EndpointDefaults__Protocols: "Http2"
+      RabbitMQ__Host: "tms-rabbit"
+    ports:
+      - "50052:8080"
+    restart: unless-stopped
+
+    networks:
+      - tms
+
+networks:
+  tms:
+    external: true
